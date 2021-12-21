@@ -1,0 +1,1 @@
+# plaidware-wms-core
