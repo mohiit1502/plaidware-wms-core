@@ -16,6 +16,10 @@ const schema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    zone_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Zone",
+    },
     rows: [
       {
         type: mongoose.Schema.Types.ObjectId,
