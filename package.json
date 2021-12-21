@@ -1,0 +1,36 @@
+{
+  "name": "plaidware-wms-core",
+  "version": "1.0.0",
+  "description": "Warehouse management system",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "lint": "eslint . -c .eslintrc.js",
+    "lint-fix": "eslint . -c .eslintrc.js --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kfnawaz/plaidware-wms-core.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kfnawaz/plaidware-wms-core/issues"
+  },
+  "homepage": "https://github.com/kfnawaz/plaidware-wms-core#readme",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.2",
+    "helmet": "^4.6.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.1.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.5.0",
+    "eslint-config-google": "^0.14.0",
+    "nodemon": "^2.0.15"
+  }
+}
