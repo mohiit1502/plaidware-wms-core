@@ -30,6 +30,10 @@ const schema = new mongoose.Schema(
           min: 1, // Level is at 0
           max: 5,
         },
+        bay_id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Bay",
+        },
         sub_level_id: {
           required: true,
           type: mongoose.Schema.Types.ObjectId,

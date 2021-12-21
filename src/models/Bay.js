@@ -21,6 +21,10 @@ const schema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    row_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Row",
+    },
     levels: [
       {
         type: mongoose.Schema.Types.ObjectId,
