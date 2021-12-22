@@ -1,0 +1,96 @@
+const Bay = require("../models/Bay");
+const mongoose = require("mongoose");
+
+module.exports = {
+  /**
+   * Gets the bay data by `id`
+   */
+  getBayByID: async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).send("Missing id param");
+      return;
+    }
+
+    try {
+      const bayData = await Bay.findById(id);
+      if (!bayData) {
+        res.status(404);
+        return;
+      }
+      req.send(bayData);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Create a bay
+   */
+  createBay: async (req, res, next) => {
+    const { name, number, type, specs, row_id } = req.body;
+
+    if (!(name && type && number)) {
+      res.status(400).send("Missing params param");
+      return;
+    }
+
+    try {
+      const bayData = new Bay({
+        name,
+        number: parseInt(number),
+        type,
+        specs,
+        row_id: mongoose.Types.ObjectId(row_id),
+      });
+
+      await bayData.save();
+      if (!bayData) {
+        res.status(404);
+        return;
+      }
+      req.send(bayData);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Update a bays detail
+   */
+  updateBayByID: async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).send("Missing id param");
+      return;
+    }
+
+    const { name, number, type, specs, row_id } = req.body;
+
+    if (!(name || number || type || specs || row_id)) {
+      res.status(400).send("Missing data in body");
+      return;
+    }
+
+    try {
+      const bayData = await Bay.findById(id);
+      if (!bayData) {
+        res.status(404);
+        return;
+      }
+
+      if (name) bayData.name = name;
+      if (number) bayData.number = parseInt(number);
+      if (type) bayData.type = type;
+      if (specs) bayData.specs = specs;
+      if (row_id) bayData.row_id = mongoose.Types.ObjectId(row_id);
+
+      await bayData.save();
+      req.send(bayData);
+    } catch (error) {
+      next(error);
+    }
+  },
+};
