@@ -9,13 +9,17 @@ const schema = new mongoose.Schema(
     },
     number: {
       required: true,
-      type: String,
+      type: Number,
       trim: true,
     },
     specs: {
       // TODO: TBD
       type: String,
       trim: true,
+    },
+    bay_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bay",
     },
     sub_levels: [
       {
