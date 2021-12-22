@@ -2,6 +2,7 @@ const express = require("express");
 
 const helmet = require("helmet");
 const cors = require("cors");
+const morgan = require("morgan");
 
 const mongoose = require("mongoose");
 const { router } = require("./controller");
@@ -27,6 +28,7 @@ const {
   const app = express();
 
   // config
+  app.use(morgan("dev"));
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cors());
   app.use(express.json());
