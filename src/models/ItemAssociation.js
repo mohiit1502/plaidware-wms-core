@@ -20,6 +20,8 @@ const schema = new mongoose.Schema(
   }
 );
 
+schema.index({ item_id: 1, sub_level_id: 1 }, { unique: 1 });
+
 const ItemAssociation = mongoose.model("ItemAssociation", schema);
 
 module.exports = ItemAssociation;
