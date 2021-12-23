@@ -2,7 +2,7 @@ const router = require("express").Router();
 const userRouter = require("./user.router");
 const userRoleRouter = require("./userRole.router");
 const userPermissionRouter = require("./userPermission.router");
-const { AuthenticateMiddleware } = require("../config/authenticator");
+const { AuthenticateMiddleware } = require("../config/auth");
 
 router.use("/user", userRouter);
 router.use("/user-role", AuthenticateMiddleware, userRoleRouter);
