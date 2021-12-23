@@ -6,7 +6,7 @@ const {
   JWT_SECRET,
   JWT_REFRESH_EXPIRY_TIME,
   JWT_ACCESS_EXPIRY_TIME,
-} = require("../../config/env");
+} = require("./../config/env");
 
 const createAccessToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, {

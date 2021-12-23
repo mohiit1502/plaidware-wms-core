@@ -1,33 +1,49 @@
 const mongoose = require("mongoose");
-const { UserActions, WarehouseScopes } = require("./../config/constants");
+const {
+  UserActions,
+  WarehouseScopes,
+  InventoryScopes,
+} = require("./../config/constants");
 
 const schema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: true,
+      unique: true,
       trim: true,
     },
-    inventory: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Inventory",
-    },
-    warehouseScope: {
-      on: {
-        type: mongoose.Schema.Types.ObjectId,
-        refPath: "onModel",
+    inventoryScopes: [
+      {
+        id: {
+          type: mongoose.Schema.Types.ObjectId,
+          refPath: "type",
+        },
+        type: {
+          type: String,
+          enum: InventoryScopes,
+        },
       },
-      onModel: {
+    ],
+    warehouseScopes: [
+      {
+        id: {
+          type: mongoose.Schema.Types.ObjectId,
+          refPath: "type",
+        },
+        type: {
+          type: String,
+          enum: WarehouseScopes,
+        },
+      },
+    ],
+    actions: [
+      {
         type: String,
         required: true,
-        enum: WarehouseScopes,
+        enum: UserActions,
       },
-    },
-    actions: {
-      type: String,
-      required: true,
-      enum: UserActions,
-    },
+    ],
   },
   {
     timestamps: true,

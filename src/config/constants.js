@@ -12,6 +12,8 @@ const UserActions = [
   "Receive",
 ];
 
+const InventoryScopes = ["Inventory", "Material", "Item"];
+
 const WarehouseScopes = [
   "Warehouse",
   "Zone",
@@ -40,6 +42,7 @@ const CustomAttributeTypes = [
 
 module.exports = {
   UserActions,
+  InventoryScopes,
   WarehouseScopes,
   InventoryTypes,
   CustomAttributeTypes,
