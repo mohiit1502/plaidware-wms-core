@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 const User = require("./../models/User");
 const {
@@ -7,6 +8,8 @@ const {
   JWT_REFRESH_EXPIRY_TIME,
   JWT_ACCESS_EXPIRY_TIME,
 } = require("./../config/env");
+const UserRole = require("../models/UserRole");
+const UserPermission = require("../models/UserPermission");
 
 const createAccessToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, {
@@ -18,6 +21,18 @@ const createRefreshToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, {
     expiresIn: JWT_REFRESH_EXPIRY_TIME,
   });
+};
+
+const getValidIds = async (ids, model) => {
+  const verifiedIds = ids.filter((permission) =>
+    mongoose.isValidObjectId(permission)
+  );
+  const verifiedObjects = await model
+    .find({
+      id: { $in: verifiedIds },
+    })
+    .select({ _id: 1 });
+  return verifiedObjects.map((_) => _._id);
 };
 
 module.exports = {
@@ -66,5 +81,42 @@ module.exports = {
       next(err);
     }
   },
-  updateUserAccessControl: async (req, res, next) => {},
+
+  addUserAccessControl: async (req, res, next) => {
+    const { user, roles, permissions } = req.body;
+    if (!mongoose.isValidObjectId(user)) {
+      throw new Error(`invalid format for user id field`);
+    }
+    const verifiedRoleIds = await getValidIds(roles, UserRole);
+    const verifiedPermissionIds = await getValidIds(
+      permissions,
+      UserPermission
+    );
+    const response = await User.findByIdAndUpdate(user, {
+      $push: {
+        roles: { $each: verifiedRoleIds },
+        permissions: { $each: verifiedPermissionIds },
+      },
+    });
+    res.send({ success: true, data: response });
+  },
+
+  removeUserAccessControl: async (req, res, next) => {
+    const { user, roles, permissions } = req.body;
+    if (!mongoose.isValidObjectId(user)) {
+      throw new Error(`invalid format for user id field`);
+    }
+    const verifiedRoleIds = await getValidIds(roles, UserRole);
+    const verifiedPermissionIds = await getValidIds(
+      permissions,
+      UserPermission
+    );
+    const response = await User.findByIdAndUpdate(user, {
+      $pull: {
+        roles: { $in: verifiedRoleIds },
+        permissions: { $in: verifiedPermissionIds },
+      },
+    });
+    res.send({ success: true, data: response });
+  },
 };

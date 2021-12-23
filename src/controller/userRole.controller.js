@@ -7,7 +7,7 @@ const getValidPermissions = async (permissions) => {
     mongoose.isValidObjectId(permission)
   );
   const permissionObjects = await UserPermission.find({
-    id: { in: verifiedPermissions },
+    id: { $in: verifiedPermissions },
   }).select({ _id: 1 });
   return permissionObjects.map((_) => _._id);
 };
@@ -45,7 +45,7 @@ module.exports = {
   createRole: async (req, res, next) => {
     try {
       const { name, permissions } = req.body;
-      const verifiedPermissions = getValidPermissions(permissions);
+      const verifiedPermissions = await getValidPermissions(permissions);
       const newUserRole = await UserRole.create({
         name,
         permissions: verifiedPermissions,
