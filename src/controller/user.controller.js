@@ -66,4 +66,5 @@ module.exports = {
       next(err);
     }
   },
+  updateUserAccessControl: async (req, res, next) => {},
 };
