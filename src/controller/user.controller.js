@@ -64,6 +64,7 @@ module.exports = {
       const accessToken = createAccessToken(user._id);
       const refreshToken = createRefreshToken(user._id);
 
+      user.accessToken = accessToken;
       user.refreshToken = refreshToken;
       await user.save();
 

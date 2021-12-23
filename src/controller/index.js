@@ -2,10 +2,11 @@ const router = require("express").Router();
 const userRouter = require("./user.router");
 const userRoleRouter = require("./userRole.router");
 const userPermissionRouter = require("./userPermission.router");
+const { AuthenticateMiddleware } = require("../config/authenticator");
 
 router.use("/user", userRouter);
-router.use("/user-role", userRoleRouter);
-router.use("/user-permission", userPermissionRouter);
+router.use("/user-role", AuthenticateMiddleware, userRoleRouter);
+router.use("/user-permission", AuthenticateMiddleware, userPermissionRouter);
 
 router.get("/", (req, res) => {
   res.send({ success: true, message: "Hello world" });
