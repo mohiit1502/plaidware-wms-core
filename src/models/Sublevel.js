@@ -68,6 +68,6 @@ const schema = new mongoose.Schema(
   }
 );
 
-const Level = mongoose.model("Level", schema);
+const SubLevel = mongoose.model("SubLevel", schema);
 
-module.exports = Level;
+module.exports = SubLevel;

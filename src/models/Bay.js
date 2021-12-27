@@ -37,6 +37,6 @@ const schema = new mongoose.Schema(
   }
 );
 
-const Level = mongoose.model("Level", schema);
+const Bay = mongoose.model("Bay", schema);
 
-module.exports = Level;
+module.exports = Bay;
