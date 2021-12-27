@@ -12,6 +12,8 @@ const UserActions = [
   "Receive",
 ];
 
+const InventoryScopes = ["Inventory", "Material", "Item"];
+
 const WarehouseScopes = [
   "Warehouse",
   "Zone",
@@ -38,9 +40,22 @@ const CustomAttributeTypes = [
   "Enumerable",
 ];
 
+const AUTHENTICATION_FAILURE_ERROR_MESSAGE =
+  "Authentication Failed!";
+const AUTHORIZATION_FAILURE_ERROR_MESSAGE =
+  "User not permitted due to lack of access!";
+
 module.exports = {
   UserActions,
+  InventoryScopes,
   WarehouseScopes,
   InventoryTypes,
   CustomAttributeTypes,
+  SUPER_ADMIN_ROLE: "super-admin",
+  COMPANY_ADMIN_ROLE: "company-admin",
+  WAREHOUSE_ADMIN_ROLE: "warehouse-admin",
+  ZONE_ADMIN_ROLE: "zone-admin",
+  AREA_ADMIN_ROLE: "area-admin",
+  AUTHENTICATION_FAILURE_ERROR_MESSAGE,
+  AUTHORIZATION_FAILURE_ERROR_MESSAGE,
 };

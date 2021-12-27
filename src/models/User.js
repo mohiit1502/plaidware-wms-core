@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const { isEmail } = require("validator");
-const { UserActions, WarehouseScopes } = require("./../config/constants");
+const bcrypt = require("bcrypt");
 
 const schema = new mongoose.Schema(
   {
@@ -36,28 +36,16 @@ const schema = new mongoose.Schema(
     passwordResetToken: {
       type: String,
     },
-    authPolicies: [
+    roles: [
       {
-        inventory: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Inventory",
-        },
-        warehouseScope: {
-          on: {
-            type: mongoose.Schema.Types.ObjectId,
-            refPath: "onModel",
-          },
-          onModel: {
-            type: String,
-            required: true,
-            enum: WarehouseScopes,
-          },
-        },
-        actions: {
-          type: String,
-          required: true,
-          enum: UserActions,
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "UserRole",
+      },
+    ],
+    permissions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "UserPermission",
       },
     ],
   },
@@ -65,6 +53,18 @@ const schema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+schema.statics.login = async function (email, password) {
+  const user = await this.findOne({ email });
+  if (user) {
+    const auth = await bcrypt.compare(password, user.password);
+    if (auth) {
+      return user;
+    }
+    throw Error("incorrect password");
+  }
+  throw Error("incorrect email");
+};
 
 const User = mongoose.model("User", schema);
 
