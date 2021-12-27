@@ -1,9 +1,12 @@
-const UserRole = require("../../models/UserRole");
-const { SUPER_ADMIN_ROLE, AUTHORIZATION_FAILURE_ERROR_MESSAGE } = require("../../config/constants");
 const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = require("./env");
-const User = require("../models/User");
-const constants = require("./constants");
+const User = require("../../models/User");
+const UserRole = require("../../models/UserRole");
+const {
+  SUPER_ADMIN_ROLE,
+  AUTHORIZATION_FAILURE_ERROR_MESSAGE,
+} = require("../../config/constants");
+const { JWT_SECRET } = require("../../config/env");
+const constants = require("../../config/constants");
 
 const authenticate = async (token) => {
   const decodedToken = jwt.verify(token, JWT_SECRET);
@@ -50,6 +53,8 @@ module.exports = {
         const user = authenticate(token);
         res.locals.user = user;
         next();
+      } else {
+        throw new Error("Not Authenticated user!");
       }
     } catch (error) {
       res.status(401).send({

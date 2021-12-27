@@ -51,6 +51,6 @@ const schema = new mongoose.Schema(
   }
 );
 
-const Level = mongoose.model("Level", schema);
+const Level = mongoose.models.Level || mongoose.model("Level", schema);
 
 module.exports = Level;
