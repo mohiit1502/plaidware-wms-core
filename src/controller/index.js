@@ -30,7 +30,7 @@ router.get("/", (req, res) => {
 
 router.use(function (err, req, res, next) {
   console.error(err.stack);
-  res.status(500).send({ error: `Error: ${err.message}` });
+  res.status(500).send({ success: false, error: `Error: ${err.message}` });
 });
 
 module.exports = { router };
