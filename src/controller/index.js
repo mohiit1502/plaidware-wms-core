@@ -11,6 +11,7 @@ const areaRouter = require("./area.router");
 const bayRouter = require("./bay.router");
 const rowRouter = require("./row.router");
 const levelRouter = require("./level.router");
+const sublevelRouter = require("./sublevel.router");
 
 router.use("/user-role", AuthenticateMiddleware, userRoleRouter);
 router.use("/user-permission", AuthenticateMiddleware, userPermissionRouter);
@@ -22,6 +23,7 @@ router.use("/area", areaRouter);
 router.use("/bay", bayRouter);
 router.use("/row", rowRouter);
 router.use("/level", levelRouter);
+router.use("/sublevel", sublevelRouter);
 
 
 router.get("/", (req, res) => {
