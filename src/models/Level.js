@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { SubLevelTypes } = require("../config/constants");
 
 const schema = new mongoose.Schema(
   {
@@ -26,7 +27,7 @@ const schema = new mongoose.Schema(
         type: {
           required: true,
           type: String,
-          enum: ["POSITION", "BIN", "PALLET"], // TODO: Add to constant file
+          enum: SubLevelTypes
         },
         depth: {
           required: true,

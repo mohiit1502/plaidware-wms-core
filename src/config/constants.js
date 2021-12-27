@@ -40,10 +40,11 @@ const CustomAttributeTypes = [
   "Enumerable",
 ];
 
-const AUTHENTICATION_FAILURE_ERROR_MESSAGE =
-  "Authentication Failed!";
+const AUTHENTICATION_FAILURE_ERROR_MESSAGE = "Authentication Failed!";
 const AUTHORIZATION_FAILURE_ERROR_MESSAGE =
   "User not permitted due to lack of access!";
+
+const SubLevelTypes = ["POSITION", "BIN", "PALLET"];
 
 module.exports = {
   UserActions,
@@ -51,6 +52,7 @@ module.exports = {
   WarehouseScopes,
   InventoryTypes,
   CustomAttributeTypes,
+  SubLevelTypes,
   SUPER_ADMIN_ROLE: "super-admin",
   COMPANY_ADMIN_ROLE: "company-admin",
   WAREHOUSE_ADMIN_ROLE: "warehouse-admin",
