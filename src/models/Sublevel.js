@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { SubLevelTypes } = require("../config/constants");
+const { SubLevelTypes, LevelPositions } = require("../config/constants");
 
 const schema = new mongoose.Schema(
   {
@@ -11,7 +11,7 @@ const schema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: SubLevelTypes
+      enum: SubLevelTypes,
     },
     specs: {
       // TBD
@@ -39,11 +39,10 @@ const schema = new mongoose.Schema(
           type: String,
           enum: SubLevelTypes,
         },
-        depth: {
+        postition: {
           required: true,
-          type: Number,
-          min: 1, // Level is at 0
-          max: 5,
+          type: String,
+          enum: LevelPositions,
         },
         sub_level_id: {
           required: true,
