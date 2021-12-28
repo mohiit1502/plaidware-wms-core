@@ -14,6 +14,6 @@ router.post("/", controller.createSubLevel);
 /**
  * @route /sublevel/
  */
-router.patch("/:id", controller.updateSubLevelByID);
+router.patch("/:id", controller.updateSubLevelDetailsByID);
 
 module.exports = router;

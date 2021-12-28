@@ -1,4 +1,4 @@
-const SubLevel = require("../models/SubLevel");
+const SubLevel = require("../models/Sublevel");
 const mongoose = require("mongoose");
 
 module.exports = {
@@ -29,27 +29,33 @@ module.exports = {
    * Create a sublevel
    */
   createSubLevel: async (req, res, next) => {
-    const { name, type, specs, main_level_id } = req.body;
+    const { name, type, specs, parent_sublevel_id, main_level_id } = req.body;
 
-    if (!(name && type && main_level_id)) {
+    if (!(name && type && parent_sublevel_id)) {
       res.status(400).send("Missing params param");
       return;
     }
 
     try {
-      const levelData = new SubLevel({
+      const { parent_current_depth, parent_main_level_id } = parent_sublevel_id
+        ? await SubLevel.findById(parent_sublevel_id)
+        : { current_depth: 1, p_main_level_id: main_level_id };
+
+      const sublevelData = new SubLevel({
         name,
         type: type,
         specs,
-        main_level_id: mongoose.Types.ObjectId(main_level_id),
+        main_level_id: parent_main_level_id,
+        current_depth: parent_current_depth + 1,
+        parent_sublevel_id: mongoose.Types.ObjectId(parent_sublevel_id),
       });
 
-      await levelData.save();
-      if (!levelData) {
+      await sublevelData.save();
+      if (!sublevelData) {
         res.status(404);
         return;
       }
-      req.send(levelData);
+      req.send(sublevelData);
     } catch (error) {
       next(error);
     }
@@ -58,37 +64,28 @@ module.exports = {
   /**
    * Update a sublevels' detail
    */
-  updateSubLevelByID: async (req, res, next) => {
+  updateSubLevelDetailsByID: async (req, res, next) => {
+    const { name, type, specs } = req.body;
     const { id } = req.params;
 
-    if (!id) {
-      res.status(400).send("Missing id param");
-      return;
-    }
-
-    const { name, type, specs, main_level_id } = req.body;
-
-    if (!(name || type || specs || main_level_id)) {
-      res.status(400).send("Missing data in body");
+    if (!(name || type || specs)) {
+      res.status(400).send("Missing params param");
       return;
     }
 
     try {
-      const levelData = await SubLevel.findById(id);
-      if (!levelData) {
+      const sublevelData = await SubLevel.findById(id);
+      if (!sublevelData) {
         res.status(404);
         return;
       }
 
-      if (name) levelData.name = name;
-      if (type) levelData.type = type;
-      if (specs) levelData.specs = specs;
-      if (main_level_id) {
-        levelData.main_level_id = mongoose.Types.ObjectId(main_level_id);
-      }
+      if (name) sublevelData.name = name;
+      if (type) sublevelData.type = type;
+      if (specs) sublevelData.specs = specs;
 
-      await levelData.save();
-      req.send(levelData);
+      const newData = await sublevelData.save();
+      req.send(newData);
     } catch (error) {
       next(error);
     }
