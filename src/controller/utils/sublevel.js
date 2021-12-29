@@ -1,5 +1,5 @@
 const Sublevel = require("../../models/Sublevel");
-// const Level = require("../../models/Level");
+const Level = require("../../models/Level");
 
 /**
  * To move a sub level
@@ -7,7 +7,7 @@ const Sublevel = require("../../models/Sublevel");
  * @param {string} parent_sub_or_level_id The Level/Sublevel under which to be moved
  * @returns {{success: boolean, message: string}}
  */
-exports.moveSublevel = async (sub_level_id, parent_sub_or_level_id) => {
+const moveSublevel = async (sub_level_id, parent_sub_or_level_id) => {
   /**
    * - Check if depths of parent_sub_level_id and parent_sub_or_level_id are same
    * - Copy and add references
@@ -21,9 +21,12 @@ exports.moveSublevel = async (sub_level_id, parent_sub_or_level_id) => {
  * @param {string} root_sub_level_id The root Sublevel ID
  * @returns {string[]} The Sublevel IDs that have been deleted
  */
-exports.deleteSubLevelTreeFromRoot = async (root_sub_level_id) => {
+const deleteSubLevelTreeFromRoot = async (root_sub_level_id) => {
   let sub_level_ids = [];
   let temp_sub_level_ids = [root_sub_level_id];
+
+  // remove from parent first
+  await removeSublevelFromParent(root_sub_level_id);
 
   while (temp_sub_level_ids.length > 0) {
     const level_sub_level_data = await Sublevel.find({
@@ -51,7 +54,7 @@ exports.deleteSubLevelTreeFromRoot = async (root_sub_level_id) => {
  * @param {string} parent_id The parent level ID
  * @param {boolean} parentIsLevel Is parent a level?
  */
-exports.addSublevelToParent = async (payload, parent_id, parentIsLevel) => {
+const addSublevelToParent = async (payload, parent_id, parentIsLevel) => {
   if (parentIsLevel) {
     // add sublevel to parent
     const parentData = await Sublevel.findById(parent_id);
@@ -63,4 +66,24 @@ exports.addSublevelToParent = async (payload, parent_id, parentIsLevel) => {
     parentData.sub_levels.push(payload);
     return await parentData.save();
   }
+};
+
+const removeSublevelFromParent = async (id) => {
+  const { main_level_id, parent_sublevel_id, current_depth } = await Sublevel.findById(id);
+  if (current_depth == 1) {
+    // it means parent is level
+    const parentData = await Level.findById(main_level_id);
+    parentData.sub_levels = parentData.sub_levels.filter((sub_level) => sub_level.sub_level_id != id);
+  } else {
+    // parent is another sublevel
+    const parentData = await Sublevel.findById(parent_sublevel_id);
+    parentData.sub_levels = parentData.sub_levels.filter((sub_level) => sub_level.sub_level_id != id);
+  }
+};
+
+module.exports = {
+  addSublevelToParent,
+  removeSublevelFromParent,
+  deleteSubLevelTreeFromRoot,
+  moveSublevel,
 };
