@@ -29,7 +29,7 @@ const schema = new mongoose.Schema(
           type: String,
           enum: SubLevelTypes,
         },
-        postition: [
+        postitions: [
           {
             type: String,
             enum: LevelPositions,

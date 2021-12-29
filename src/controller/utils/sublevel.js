@@ -44,3 +44,23 @@ exports.deleteSubLevelTreeFromRoot = async (root_sub_level_id) => {
   console.log("Deleting sub-level tree", { sub_level_ids });
   return sub_level_ids;
 };
+
+/**
+ * Add the sublevel data to the parent document
+ * @param {{type: string, positions: string[], sub_level_id: string}} payload The sublevel data
+ * @param {string} parent_id The parent level ID
+ * @param {boolean} parentIsLevel Is parent a level?
+ */
+exports.addSublevelToParent = async (payload, parent_id, parentIsLevel) => {
+  if (parentIsLevel) {
+    // add sublevel to parent
+    const parentData = await Sublevel.findById(parent_id);
+    parentData.sub_levels.push(payload);
+    return await parentData.save();
+  } else {
+    // add sublevel to sublevel
+    const parentData = await Sublevel.findById(parent_id);
+    parentData.sub_levels.push(payload);
+    return await parentData.save();
+  }
+};
