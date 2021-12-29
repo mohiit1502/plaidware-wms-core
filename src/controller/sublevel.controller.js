@@ -38,11 +38,13 @@ module.exports = {
     }
 
     try {
-      const { parent_current_depth, parent_main_level_id } = parentIsLevel
+      const parentData = parentIsLevel
         ? { parent_current_depth: 0, parent_main_level_id: parent_id }
         : await Sublevel.findById(parent_id);
 
-      const sublevelData = Sublevel.create({
+      const { parent_current_depth, parent_main_level_id } = parentData;
+
+      const sublevelData = new Sublevel({
         name,
         type: type,
         specs,
@@ -51,7 +53,11 @@ module.exports = {
         parent_sublevel_id: mongoose.Types.ObjectId(parent_id),
       });
 
-      await addSublevelToParent({ type, positions, sub_level_id: sublevelData._id.toString() }, parent_id, parentIsLevel);
+      await addSublevelToParent(
+        { type, positions, sub_level_id: sublevelData._id.toString() },
+        parent_id,
+        parentIsLevel
+      );
 
       await sublevelData.save();
       if (!sublevelData) {
