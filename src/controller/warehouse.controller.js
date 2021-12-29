@@ -56,6 +56,28 @@ module.exports = {
   },
 
   /**
+   * Upload an image for the warehouse
+   */
+  addWarehouseImage: async (req, res, next) => {
+    console.dir("Warehouse image uploaded:", { file: req.file });
+
+    const { id } = req.params;
+
+    try {
+      const warehouseDetails = await Warehouse.findById(id);
+      if (!warehouseDetails) {
+        res.send({ success: false, message: "ID not found" });
+        return;
+      }
+      warehouseDetails.imageUrl = req.file.path;
+      await warehouseDetails.save();
+      res.send({ success: true, data: warehouseDetails });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
    * Update a warehouses detail
    */
   updateWarehouseByID: async (req, res, next) => {
