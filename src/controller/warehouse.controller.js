@@ -65,6 +65,10 @@ module.exports = {
 
     try {
       const warehouseDetails = await Warehouse.findById(id);
+      if (!warehouseDetails) {
+        res.send({ success: false, message: "ID not found" });
+        return;
+      }
       warehouseDetails.imageUrl = req.file.path;
       await warehouseDetails.save();
       res.send({ success: true, data: warehouseDetails });
