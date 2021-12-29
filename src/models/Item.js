@@ -47,10 +47,6 @@ const schema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    unitQuantity: {
-      type: Number,
-      required: true,
-    },
     packageCount: {
       type: Number,
       required: true,
