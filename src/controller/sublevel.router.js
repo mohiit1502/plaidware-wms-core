@@ -12,8 +12,13 @@ router.get("/:id", controller.getSubLevelByID);
 router.post("/", controller.createSubLevel);
 
 /**
- * @route /sublevel/
+ * @route /sublevel/:id
  */
 router.patch("/:id", controller.updateSubLevelDetailsByID);
+
+/**
+ * - delete
+ * - add prefered_inventory
+ */
 
 module.exports = router;

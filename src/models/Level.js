@@ -14,8 +14,7 @@ const schema = new mongoose.Schema(
       trim: true,
     },
     specs: {
-      // TODO: TBD
-      type: String,
+      type: Object,
       trim: true,
     },
     bay_id: {

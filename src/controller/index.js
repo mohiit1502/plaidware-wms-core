@@ -25,7 +25,6 @@ router.use("/bay", bayRouter);
 router.use("/row", rowRouter);
 router.use("/level", levelRouter);
 router.use("/sublevel", sublevelRouter);
-
 router.use("/dashboard", dashboardRouter);
 
 router.get("/", (req, res) => {
