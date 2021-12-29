@@ -27,13 +27,14 @@ const schema = new mongoose.Schema(
         type: {
           required: true,
           type: String,
-          enum: SubLevelTypes
+          enum: SubLevelTypes,
         },
-        postition: {
-          required: true,
-          type: String,
-          enum: LevelPositions,
-        },
+        postition: [
+          {
+            type: String,
+            enum: LevelPositions,
+          },
+        ],
         sub_level_id: {
           required: true,
           type: mongoose.Schema.Types.ObjectId,

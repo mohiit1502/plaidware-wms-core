@@ -39,11 +39,12 @@ const schema = new mongoose.Schema(
           type: String,
           enum: SubLevelTypes,
         },
-        postition: {
-          required: true,
-          type: String,
-          enum: LevelPositions,
-        },
+        postitions: [
+          {
+            type: String,
+            enum: LevelPositions,
+          },
+        ],
         sub_level_id: {
           required: true,
           type: mongoose.Schema.Types.ObjectId,
@@ -55,11 +56,11 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    inventory: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Inventory",
-      },
+    preffered_inventory: [
+      // {
+      //   type: mongoose.Schema.Types.ObjectId,
+      //   ref: "Inventory",
+      // },
     ],
   },
   {

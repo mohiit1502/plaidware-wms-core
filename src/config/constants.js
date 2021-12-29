@@ -13,33 +13,14 @@ const UserActions = [
 ];
 
 const LevelPositions = [
-  "B",
-  "D",
-  "DB",
-  "DF",
-  "F",
-  "L",
-  "LB",
-  "LD",
   "LDB",
   "LDF",
-  "LF",
-  "LU",
   "LUB",
   "LUF",
-  "R",
-  "RB",
-  "RD",
   "RDB",
   "RDF",
-  "RF",
-  "RU",
   "RUB",
   "RUF",
-  "U",
-  "UB",
-  "UF",
-  "W",
 ];
 
 const InventoryScopes = ["Inventory", "Material", "Item"];
