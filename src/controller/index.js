@@ -2,7 +2,7 @@ const router = require("express").Router();
 const userRouter = require("./user.router");
 const userRoleRouter = require("./userRole.router");
 const userPermissionRouter = require("./userPermission.router");
-const { AuthenticateMiddleware } = require("../config/auth");
+const { AuthenticateMiddleware } = require("./utils/authorize");
 
 const companyRouter = require("./company.router");
 const warehouseRouter = require("./warehouse.router");
@@ -11,6 +11,7 @@ const areaRouter = require("./area.router");
 const bayRouter = require("./bay.router");
 const rowRouter = require("./row.router");
 const levelRouter = require("./level.router");
+const dashboardRouter = require("./dashboard.router");
 
 router.use("/user-role", AuthenticateMiddleware, userRoleRouter);
 router.use("/user-permission", AuthenticateMiddleware, userPermissionRouter);
@@ -22,7 +23,7 @@ router.use("/area", areaRouter);
 router.use("/bay", bayRouter);
 router.use("/row", rowRouter);
 router.use("/level", levelRouter);
-
+router.use("/dashboard", dashboardRouter);
 
 router.get("/", (req, res) => {
   res.send({ success: true, message: "Hello world" });
