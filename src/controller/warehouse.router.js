@@ -16,7 +16,7 @@ router.post("/", controller.createWarehouse);
  * @route /warehouse/add-image
  */
 router.post(
-  "/add-image",
+  "/add-image/:id",
   upload.single("warehouse-image"),
   controller.addWarehouseImage
 );
