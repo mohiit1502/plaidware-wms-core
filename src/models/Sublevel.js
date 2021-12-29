@@ -14,8 +14,7 @@ const schema = new mongoose.Schema(
       enum: SubLevelTypes,
     },
     specs: {
-      // TBD
-      type: String,
+      type: Object,
       trim: true,
     },
     main_level_id: {
