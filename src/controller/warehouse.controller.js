@@ -59,7 +59,6 @@ module.exports = {
    * Upload an image for the warehouse
    */
   addWarehouseImage: async (req, res, next) => {
-    // req.file contains the `warehouse-image`
     console.dir("Warehouse image uploaded:", { file: req.file });
 
     const { id } = req.params;

@@ -6,26 +6,17 @@ const storage = multer.diskStorage({
     cb(null, "./uploads/");
   },
   limits: {
-    // files: 1,
+    // files: 1, // Limit number of file uploads, if needed
     fileSize: 1024 * 1024,
   },
   filename: function (req, file, cb) {
     cb(
       null,
-      file.fieldname +
-        "-" +
-        Date.now() +
-        "." +
-        file.originalname.split(".")[file.originalname.split(".").length - 1]
+      file.fieldname + "-" + Date.now() + "." + file.originalname.split(".")[file.originalname.split(".").length - 1]
     );
   },
   onFileUploadStart: function (file) {
-    console.log("Inside uploads");
-    if (
-      file.mimetype == "image/jpg" ||
-      file.mimetype == "image/jpeg" ||
-      file.mimetype == "image/png"
-    ) {
+    if (file.mimetype == "image/jpg" || file.mimetype == "image/jpeg" || file.mimetype == "image/png") {
       return true;
     } else {
       return false;
