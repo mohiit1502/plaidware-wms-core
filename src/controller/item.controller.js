@@ -1,4 +1,6 @@
+const mongoose = require("mongoose");
 const Item = require("../models/Item");
+const Material = require("../models/Material");
 
 module.exports = {
   /**
@@ -28,6 +30,10 @@ module.exports = {
    * Create a Item
    */
   createItem: async (req, res, next) => {
+    let material;
+    if (req.body.materialId && mongoose.isValidObjectId(req.body.materialId)) {
+      material = await Material.findById(material);
+    }
     const item = {
       commonName: req.body.commonName,
       formalName: req.body.formalName,
@@ -42,6 +48,7 @@ module.exports = {
       countPerPallet: req.body.countPerPallet,
       countPerPalletPackage: req.body.countPerPalletPackage,
       customAttributes: req.body.customAttributes,
+      material,
     };
 
     if (Object.values(item).every((_) => _)) {
