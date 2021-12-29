@@ -250,7 +250,7 @@ module.exports = {
       if (!req.body.warehouse) {
         res.status(400).send({
           success: false,
-          message: "Creation of Inventory Failed, missing params",
+          message: "Creation of Warehouse Failed, missing params",
         });
         return;
       }
@@ -259,7 +259,7 @@ module.exports = {
       if (!warehouse) {
         res.status(400).send({
           success: false,
-          message: "Creation of Inventory Failed, invalid/missing params",
+          message: "Creation of Warehouse Failed, invalid/missing params",
         });
         return;
       }
