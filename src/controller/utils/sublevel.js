@@ -1,5 +1,6 @@
 const Sublevel = require("../../models/Sublevel");
 const Level = require("../../models/Level");
+const { LevelPositions } = require("../../config/constants");
 
 /**
  * To move a sub level
@@ -81,9 +82,23 @@ const removeSublevelFromParent = async (id) => {
   }
 };
 
+/**
+ * Provides a list of available positions at the particular Level/Sublevel
+ * @param {object} sublevelData Level / Sublevel mongoose document
+ * @returns {string[]} The list of available positions
+ */
+const findAvailablePositions = (sublevelData) => {
+  let positionsOccupied = [];
+  sublevelData.sub_levels.forEach((sublevel) => {
+    positionsOccupied = [...positionsOccupied, ...sublevel.sub_levels];
+  });
+  return LevelPositions.filter((pos) => !positionsOccupied.includes(pos));
+};
+
 module.exports = {
   addSublevelToParent,
   removeSublevelFromParent,
   deleteSubLevelTreeFromRoot,
   moveSublevel,
+  findAvailablePositions,
 };
