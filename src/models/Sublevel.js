@@ -68,12 +68,7 @@ const schema = new mongoose.Schema(
   }
 );
 
-schema.pre("save", function (next) {
-  // const sublevel = this;
-  // // write validation here?
-  next();
-});
+const Sublevel = mongoose.model("Sublevel", schema);
 
-const SubLevel = mongoose.model("SubLevel", schema);
+module.exports = Sublevel;
 
-module.exports = SubLevel;

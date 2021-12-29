@@ -1,7 +1,6 @@
 const router = require("express").Router();
 const controller = require("./user.controller");
-const { AuthenticateMiddleware } = require("../config/auth");
-const { SuperAdminCheck } = require("./utils/authorize");
+const { SuperAdminCheck, AuthenticateMiddleware } = require("./utils/authorize");
 
 router.post("/register", controller.registerUser);
 router.post("/login", controller.loginUser);

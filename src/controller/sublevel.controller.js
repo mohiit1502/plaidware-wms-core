@@ -1,4 +1,4 @@
-const SubLevel = require("../models/Sublevel");
+const Sublevel = require("../models/Sublevel");
 const mongoose = require("mongoose");
 
 module.exports = {
@@ -14,7 +14,7 @@ module.exports = {
     }
 
     try {
-      const subLevelData = await SubLevel.findById(id);
+      const subLevelData = await Sublevel.findById(id);
       if (!subLevelData) {
         res.status(404);
         return;
@@ -38,10 +38,10 @@ module.exports = {
 
     try {
       const { parent_current_depth, parent_main_level_id } = parent_sublevel_id
-        ? await SubLevel.findById(parent_sublevel_id)
+        ? await Sublevel.findById(parent_sublevel_id)
         : { current_depth: 1, p_main_level_id: main_level_id };
 
-      const sublevelData = new SubLevel({
+      const sublevelData = new Sublevel({
         name,
         type: type,
         specs,
@@ -74,7 +74,7 @@ module.exports = {
     }
 
     try {
-      const sublevelData = await SubLevel.findById(id);
+      const sublevelData = await Sublevel.findById(id);
       if (!sublevelData) {
         res.status(404);
         return;

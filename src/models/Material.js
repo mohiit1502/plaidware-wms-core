@@ -7,21 +7,15 @@ const schema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    family: [
-      {
-        name: {
-          type: String,
-          required: true,
-          trim: true,
-        },
-        depth: {
-          type: Number,
-          required: true,
-          min: 1,
-          max: 10
-        },
-      },
-    ],
+    parent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Material",
+    },
+    inventory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Inventory",
+      required: true
+    },
   },
   {
     timestamps: true,

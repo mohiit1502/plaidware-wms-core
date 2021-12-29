@@ -18,6 +18,11 @@ const schema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    material: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Material",
+      required: true,
+    },
     manufacturer: {
       type: String,
       required: true,
@@ -44,10 +49,6 @@ const schema = new mongoose.Schema(
       trim: true,
     },
     unitCost: {
-      type: Number,
-      required: true,
-    },
-    unitQuantity: {
       type: Number,
       required: true,
     },
