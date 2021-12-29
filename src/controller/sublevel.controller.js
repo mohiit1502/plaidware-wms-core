@@ -29,17 +29,17 @@ module.exports = {
    * Create a sublevel
    */
   createSubLevel: async (req, res, next) => {
-    const { name, type, specs, parent_sublevel_id, main_level_id } = req.body;
+    const { name, type, specs, parent_id, parentIsLevel } = req.body;
 
-    if (!(name && type && parent_sublevel_id)) {
+    if (!(name && type && parent_id)) {
       res.status(400).send("Missing params param");
       return;
     }
 
     try {
-      const { parent_current_depth, parent_main_level_id } = parent_sublevel_id
-        ? await Sublevel.findById(parent_sublevel_id)
-        : { current_depth: 1, p_main_level_id: main_level_id };
+      const { parent_current_depth, parent_main_level_id } = parentIsLevel
+        ? { parent_current_depth: 0, parent_main_level_id: parent_id }
+        : await Sublevel.findById(parent_id);
 
       const sublevelData = new Sublevel({
         name,
@@ -47,7 +47,7 @@ module.exports = {
         specs,
         main_level_id: parent_main_level_id,
         current_depth: parent_current_depth + 1,
-        parent_sublevel_id: mongoose.Types.ObjectId(parent_sublevel_id),
+        parent_sublevel_id: mongoose.Types.ObjectId(parent_id),
       });
 
       await sublevelData.save();
