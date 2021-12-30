@@ -60,6 +60,7 @@ module.exports = {
         main_level_id: parent_main_level_id,
         current_depth: parent_current_depth + 1,
         parent_sublevel_id: mongoose.Types.ObjectId(parent_id),
+        preffered_inventory: [],
       });
 
       await addSublevelToParent({ type, positions, sub_level_id: sublevelData._id.toString() }, parent_id, parentIsLevel);
@@ -122,6 +123,30 @@ module.exports = {
     try {
       const deletedSublevels = deleteSubLevelTreeFromRoot(id);
       res.send({ success: deletedSublevels.length, data: { deletedSublevels: deletedSublevels } });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * Add preffered_inventory to a sublevel
+   */
+  addInventory: async (req, res, next) => {
+    const { id, inventory } = req.body;
+    const sublevelData = await Sublevel.findById(id);
+    if (!sublevelData) {
+      res.status(404);
+      return;
+    }
+    // eslint-disable-next-line no-prototype-builtins
+    if (inventory.every((_) => _.hasOwnProperty("id") && _.hasOwnProperty("type"))) {
+      res.status(404).send({ success: false, message: "invalid inventory data" });
+      return;
+    }
+    try {
+      sublevelData.preffered_inventory.push(...inventory);
+      await sublevelData.save();
+      res.send({ success: true, data: sublevelData.preffered_inventory });
     } catch (err) {
       next(err);
     }

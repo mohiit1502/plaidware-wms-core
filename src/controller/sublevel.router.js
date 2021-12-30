@@ -19,11 +19,11 @@ router.patch("/:id", controller.updateSubLevelDetailsByID);
 /**
  * @route /sublevel/:id
  */
-router.delete('/:id', controller.deleteSublevel);
+router.delete("/:id", controller.deleteSublevel);
 
 /**
- * - delete
- * - add prefered_inventory
+ * @route /sublevel/add-inventory
  */
+router.post("/add-inventory", controller.addInventory);
 
 module.exports = router;
