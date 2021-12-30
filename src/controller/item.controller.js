@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const Item = require("../models/Item");
 const Material = require("../models/Material");
+const Inventory = require("../models/Inventory");
+const { InventoryTypes } = require("../config/constants");
 
 module.exports = {
   /**
@@ -111,6 +113,74 @@ module.exports = {
       }
 
       await itemData.save();
+      req.send({ success: true, data: itemData });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Gets the Items data by filter
+   */
+  getItemsByFilter: async (req, res, next) => {
+    let { family, type, page, perPage } = req.query;
+    page = page || 0;
+    perPage = perPage || 10;
+    let inventories;
+    let materials;
+    let itemFilters;
+    try {
+      if (type && InventoryTypes.includes(type)) {
+        inventories = await Inventory.find({ type });
+      }
+
+      const materialFilters = [];
+      if (inventories) {
+        materialFilters.push({
+          inventory: { $in: inventories.map((_) => _._id) },
+        });
+      }
+
+      if (family) {
+        materialFilters.push({
+          name: family,
+        });
+      }
+      if (materialFilters.length > 0) {
+        materials = await Material.find({
+          $or: materialFilters,
+        });
+      }
+
+      if (materials) {
+        itemFilters = { material: { $in: materials.map((_) => _._id) } };
+      } else {
+        itemFilters = {};
+      }
+      const itemData = await Item.find(
+        itemFilters,
+        {
+          id: 1,
+          commonName: 1,
+          formalName: 1,
+          description: 1,
+          manufacturer: 1,
+          size: 1,
+          color: 1,
+          type: 1,
+          unitOfMaterial: 1,
+          unitCost: 1,
+          packageCount: 1,
+          countPerPallet: 1,
+          countPerPalletPackage: 1,
+          customAttributes: 1,
+        },
+        { skip: page * perPage, limit: perPage }
+      );
+      if (!itemData) {
+        res.status(404);
+        return;
+      }
       req.send({ success: true, data: itemData });
     } catch (error) {
       next(error);

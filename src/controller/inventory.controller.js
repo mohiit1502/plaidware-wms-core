@@ -1,4 +1,5 @@
 const Inventory = require("../models/Inventory");
+const { InventoryTypes } = require("../config/constants");
 
 module.exports = {
   /**
@@ -81,6 +82,34 @@ module.exports = {
       if (type) inventoryData.type = type;
 
       await inventoryData.save();
+      req.send({ success: true, data: inventoryData });
+    } catch (error) {
+      next(error);
+    }
+  },
+  /**
+   * Gets the Inventory data by `type`
+   */
+  getInventoryByType: async (req, res, next) => {
+    let { type, page, perPage } = req.query;
+    page = page || 0;
+    perPage = perPage || 10;
+
+    if (!type || !InventoryTypes.includes(type)) {
+      res.status(400).send("Missing/Invalid type param");
+      return;
+    }
+
+    try {
+      const inventoryData = await Inventory.find(
+        { type: type },
+        { id: 1, name: 1, type: 1 },
+        { skip: page * perPage, limit: perPage }
+      );
+      if (!inventoryData) {
+        res.status(404);
+        return;
+      }
       req.send({ success: true, data: inventoryData });
     } catch (error) {
       next(error);
