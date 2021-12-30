@@ -95,10 +95,20 @@ const findAvailablePositions = (sublevelData) => {
   return LevelPositions.filter((pos) => !positionsOccupied.includes(pos));
 };
 
+/**
+ * Check if positions are valid positions
+ * @param {string[]} positions An array of positions
+ * @returns {boolean}
+ */
+const validPositions = (positions) => {
+  return positions.every((position) => LevelPositions.includes(position));
+};
+
 module.exports = {
   addSublevelToParent,
   removeSublevelFromParent,
   deleteSubLevelTreeFromRoot,
   moveSublevel,
   findAvailablePositions,
+  validPositions,
 };

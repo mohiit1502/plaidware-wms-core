@@ -1,6 +1,7 @@
 const Sublevel = require("../models/Sublevel");
 const mongoose = require("mongoose");
-const { addSublevelToParent, deleteSubLevelTreeFromRoot } = require("./utils/sublevel");
+const { addSublevelToParent, deleteSubLevelTreeFromRoot, validPositions } = require("./utils/sublevel");
+const { SubLevelTypes } = require("../config/constants");
 
 module.exports = {
   /**
@@ -32,8 +33,18 @@ module.exports = {
   createSubLevel: async (req, res, next) => {
     const { name, type, specs, parent_id, parentIsLevel, positions } = req.body;
 
-    if (!(name && type && parent_id)) {
+    if (!(name && type && parent_id && positions)) {
       res.status(400).send("Missing params param");
+      return;
+    }
+
+    if (!SubLevelTypes.includes(type)) {
+      res.status(400).send("Invalid type");
+      return;
+    }
+
+    if (!validPositions(positions)) {
+      res.status(400).send("Invalid positions");
       return;
     }
 
@@ -73,6 +84,11 @@ module.exports = {
 
     if (!(name || type || specs)) {
       res.status(400).send("Missing params param");
+      return;
+    }
+
+    if (type && !SubLevelTypes.includes(type)) {
+      res.status(400).send("Invalid type");
       return;
     }
 
