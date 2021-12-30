@@ -18,5 +18,6 @@ module.exports = {
     "new-cap": 0,
     "quotes": 0,
     "comma-dangle": 0,
+    'operator-linebreak': 0
   },
 };
