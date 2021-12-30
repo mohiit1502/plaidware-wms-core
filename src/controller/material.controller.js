@@ -119,4 +119,34 @@ module.exports = {
       next(error);
     }
   },
+  /**
+   * Gets the Material data by `inventory`
+   */
+  getMaterialByInventory: async (req, res, next) => {
+    let { inventory, page, perPage } = req.query;
+    page = page || 0;
+    perPage = perPage || 10;
+
+    if (!inventory || !mongoose.isValidObjectId(inventory)) {
+      res.status(400).send("Missing inventory param");
+      return;
+    }
+
+    try {
+      const materialData = await Material.find(
+        { inventory: inventory },
+        { id: 1, name: 1, parent: 1, inventory: 1 },
+        { skip: page * perPage, limit: perPage }
+      )
+        .populate({ path: "parent" })
+        .populate({ path: "inventory" });
+      if (!materialData) {
+        res.status(404);
+        return;
+      }
+      req.send({ success: true, data: materialData });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

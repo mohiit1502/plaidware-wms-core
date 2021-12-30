@@ -16,4 +16,9 @@ router.post("/", controller.createItem);
  */
 router.patch("/:id", controller.updateItemByID);
 
+/**
+ * @route /item/filter
+ */
+router.get("/filter", controller.getItemsByFilter);
+
 module.exports = router;
