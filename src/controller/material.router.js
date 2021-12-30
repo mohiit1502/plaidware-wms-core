@@ -16,4 +16,9 @@ router.post("/", controller.createMaterial);
  */
 router.patch("/:id", controller.updateMaterialByID);
 
+/**
+ * @route /material/search-by-inventory
+ */
+router.get("/search-by-inventory", controller.getMaterialByInventory);
+
 module.exports = router;

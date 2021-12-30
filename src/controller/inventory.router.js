@@ -16,4 +16,9 @@ router.post("/", controller.createInventory);
  */
 router.patch("/:id", controller.updateInventoryByID);
 
+/**
+ * @route /inventory/filter-by-type
+ */
+router.get("/filter-by-type", controller.getInventoryByType);
+
 module.exports = router;
