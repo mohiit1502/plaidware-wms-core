@@ -17,6 +17,11 @@ router.post("/", controller.createSubLevel);
 router.patch("/:id", controller.updateSubLevelDetailsByID);
 
 /**
+ * @route /sublevel/:id
+ */
+router.delete('/:id', controller.deleteSublevel);
+
+/**
  * - delete
  * - add prefered_inventory
  */

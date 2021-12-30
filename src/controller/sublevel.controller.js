@@ -1,6 +1,6 @@
 const Sublevel = require("../models/Sublevel");
 const mongoose = require("mongoose");
-const { addSublevelToParent } = require("./utils/sublevel");
+const { addSublevelToParent, deleteSubLevelTreeFromRoot } = require("./utils/sublevel");
 
 module.exports = {
   /**
@@ -38,9 +38,7 @@ module.exports = {
     }
 
     try {
-      const parentData = parentIsLevel
-        ? { parent_current_depth: 0, parent_main_level_id: parent_id }
-        : await Sublevel.findById(parent_id);
+      const parentData = parentIsLevel ? { parent_current_depth: 0, parent_main_level_id: parent_id } : await Sublevel.findById(parent_id);
 
       const { parent_current_depth, parent_main_level_id } = parentData;
 
@@ -53,11 +51,7 @@ module.exports = {
         parent_sublevel_id: mongoose.Types.ObjectId(parent_id),
       });
 
-      await addSublevelToParent(
-        { type, positions, sub_level_id: sublevelData._id.toString() },
-        parent_id,
-        parentIsLevel
-      );
+      await addSublevelToParent({ type, positions, sub_level_id: sublevelData._id.toString() }, parent_id, parentIsLevel);
 
       await sublevelData.save();
       if (!sublevelData) {
@@ -97,6 +91,23 @@ module.exports = {
       req.send(newData);
     } catch (error) {
       next(error);
+    }
+  },
+
+  /**
+   * Deletes a sublevel
+   */
+  deleteSublevel: async (req, res, next) => {
+    const { id } = req.params;
+    if (!id) {
+      res.status(404).send("Provide an ID");
+    }
+
+    try {
+      const deletedSublevels = deleteSubLevelTreeFromRoot(id);
+      res.send({ success: deletedSublevels.length, data: { deletedSublevels: deletedSublevels } });
+    } catch (err) {
+      next(err);
     }
   },
 };
