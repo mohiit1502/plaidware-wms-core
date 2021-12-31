@@ -3,11 +3,7 @@ const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 
 const User = require("./../models/User");
-const {
-  JWT_SECRET,
-  JWT_REFRESH_EXPIRY_TIME,
-  JWT_ACCESS_EXPIRY_TIME,
-} = require("./../config/env");
+const { JWT_SECRET, JWT_REFRESH_EXPIRY_TIME, JWT_ACCESS_EXPIRY_TIME } = require("./../config/env");
 const UserRole = require("../models/UserRole");
 const UserPermission = require("../models/UserPermission");
 
@@ -24,12 +20,11 @@ const createRefreshToken = (id) => {
 };
 
 const getValidIds = async (ids, model) => {
-  const verifiedIds = ids.filter((permission) =>
-    mongoose.isValidObjectId(permission)
-  );
+  if (!ids) return [];
+  const verifiedIds = ids.filter((permission) => mongoose.isValidObjectId(permission));
   const verifiedObjects = await model
     .find({
-      id: { $in: verifiedIds },
+      _id: { $in: verifiedIds },
     })
     .select({ _id: 1 });
   return verifiedObjects.map((_) => _._id);
@@ -84,40 +79,48 @@ module.exports = {
   },
 
   addUserAccessControl: async (req, res, next) => {
-    const { user, roles, permissions } = req.body;
+    const { user } = req.params;
+    const { roles, permissions } = req.body;
     if (!mongoose.isValidObjectId(user)) {
       throw new Error(`invalid format for user id field`);
     }
-    const verifiedRoleIds = await getValidIds(roles, UserRole);
-    const verifiedPermissionIds = await getValidIds(
-      permissions,
-      UserPermission
-    );
-    const response = await User.findByIdAndUpdate(user, {
-      $push: {
-        roles: { $each: verifiedRoleIds },
-        permissions: { $each: verifiedPermissionIds },
+
+    let verifiedRoleIds = await getValidIds(roles, UserRole);
+    let verifiedPermissionIds = await getValidIds(permissions, UserPermission);
+    verifiedRoleIds = verifiedRoleIds || [];
+    verifiedPermissionIds = verifiedPermissionIds || [];
+
+    const response = await User.findByIdAndUpdate(
+      user,
+      {
+        $push: {
+          roles: { $each: verifiedRoleIds },
+          permissions: { $each: verifiedPermissionIds },
+        },
       },
-    });
+      { returnDocument: "after" }
+    );
     res.send({ success: true, data: response });
   },
 
   removeUserAccessControl: async (req, res, next) => {
-    const { user, roles, permissions } = req.body;
+    const { user } = req.params;
+    const { roles, permissions } = req.body;
     if (!mongoose.isValidObjectId(user)) {
       throw new Error(`invalid format for user id field`);
     }
     const verifiedRoleIds = await getValidIds(roles, UserRole);
-    const verifiedPermissionIds = await getValidIds(
-      permissions,
-      UserPermission
-    );
-    const response = await User.findByIdAndUpdate(user, {
-      $pull: {
-        roles: { $in: verifiedRoleIds },
-        permissions: { $in: verifiedPermissionIds },
+    const verifiedPermissionIds = await getValidIds(permissions, UserPermission);
+    const response = await User.findByIdAndUpdate(
+      user,
+      {
+        $pull: {
+          roles: { $in: verifiedRoleIds },
+          permissions: { $in: verifiedPermissionIds },
+        },
       },
-    });
+      { returnDocument: "after" }
+    );
     res.send({ success: true, data: response });
   },
 };

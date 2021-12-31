@@ -19,7 +19,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send(bayData);
+      res.send(bayData);
     } catch (error) {
       next(error);
     }
@@ -50,7 +50,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send(bayData);
+      res.send(bayData);
     } catch (error) {
       next(error);
     }
@@ -88,7 +88,7 @@ module.exports = {
       if (row_id) bayData.row_id = mongoose.Types.ObjectId(row_id);
 
       await bayData.save();
-      req.send(bayData);
+      res.send(bayData);
     } catch (error) {
       next(error);
     }

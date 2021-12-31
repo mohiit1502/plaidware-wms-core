@@ -19,7 +19,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send(zoneData);
+      res.send(zoneData);
     } catch (error) {
       next(error);
     }
@@ -49,7 +49,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send(zoneData);
+      res.send(zoneData);
     } catch (error) {
       next(error);
     }
@@ -86,7 +86,7 @@ module.exports = {
       if (warehouse_id) zoneData.warehouse_id = mongoose.Types.ObjectId(warehouse_id);
 
       await zoneData.save();
-      req.send(zoneData);
+      res.send(zoneData);
     } catch (error) {
       next(error);
     }

@@ -22,7 +22,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: itemData });
+      res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
     }
@@ -66,7 +66,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: itemData });
+      res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
     }
@@ -113,7 +113,7 @@ module.exports = {
       }
 
       await itemData.save();
-      req.send({ success: true, data: itemData });
+      res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
     }
@@ -124,8 +124,8 @@ module.exports = {
    */
   getItemsByFilter: async (req, res, next) => {
     let { family, type, page, perPage } = req.query;
-    page = page || 0;
-    perPage = perPage || 10;
+    page = page ? parseInt(page) : 0;
+    perPage = perPage ? parseInt(perPage) : 10;
     let inventories;
     let materials;
     let itemFilters;
@@ -181,7 +181,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: itemData });
+      res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
     }

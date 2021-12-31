@@ -38,7 +38,7 @@ const authorize = async (
 module.exports = {
   SuperAdminCheck: async (req, res, next) => {
     const SuperAdmin = await UserRole.findOne({ name: SUPER_ADMIN_ROLE });
-    if (authorize(req.locals.user, [SuperAdmin.id])) {
+    if (authorize(res.locals.user, [SuperAdmin.id])) {
       next();
     } else {
       res
@@ -50,7 +50,7 @@ module.exports = {
     try {
       const token = req.headers.authorization || "";
       if (token) {
-        const user = authenticate(token);
+        const user = await authenticate(token);
         res.locals.user = user;
         next();
       } else {
