@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { SubLevelTypes } = require("../config/constants");
+const { SubLevelTypes, LevelPositions, SublevelInventoryTypes } = require("../config/constants");
 
 const schema = new mongoose.Schema(
   {
@@ -11,11 +11,10 @@ const schema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: SubLevelTypes
+      enum: SubLevelTypes,
     },
     specs: {
-      // TBD
-      type: String,
+      type: Object,
       trim: true,
     },
     main_level_id: {
@@ -39,12 +38,12 @@ const schema = new mongoose.Schema(
           type: String,
           enum: SubLevelTypes,
         },
-        depth: {
-          required: true,
-          type: Number,
-          min: 1, // Level is at 0
-          max: 5,
-        },
+        postitions: [
+          {
+            type: String,
+            enum: LevelPositions,
+          },
+        ],
         sub_level_id: {
           required: true,
           type: mongoose.Schema.Types.ObjectId,
@@ -56,10 +55,16 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    inventory: [
+    preffered_inventory: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Inventory",
+        id: {
+          type: mongoose.Schema.Types.ObjectId,
+          refPath: "type",
+        },
+        type: {
+          type: String,
+          enum: SublevelInventoryTypes,
+        },
       },
     ],
   },
