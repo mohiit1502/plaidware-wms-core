@@ -128,12 +128,7 @@ const createLevels = async (levels, bay) => {
   return levelsArr;
 };
 
-const createSublevels = async (
-  subLevels,
-  level,
-  parent = undefined,
-  depth = 0
-) => {
+const createSublevels = async (subLevels, level, parent = undefined, depth = 0) => {
   const subLevelsArr = [];
   for (const subLevel of subLevels) {
     const subLevelObj = await Sublevel.create({
@@ -148,12 +143,7 @@ const createSublevels = async (
     });
 
     if (subLevel.sub_levels) {
-      const subSubLevels = await createSublevels(
-        subLevel.sub_levels,
-        level,
-        subLevelObj,
-        depth + 1
-      );
+      const subSubLevels = await createSublevels(subLevel.sub_levels, level, subLevelObj, depth + 1);
 
       subLevelObj.sub_levels = subSubLevels.map((_) => {
         return {
@@ -212,7 +202,7 @@ const createItems = async (items, material) => {
 
 const createMaterials = async (materials, inventory, parent = undefined) => {
   const materialsData = [];
-  for (const materialData of materials) {
+  for (const { name, family, items } of materials) {
     const material = await Material.create({
       name,
       parent,
@@ -220,23 +210,19 @@ const createMaterials = async (materials, inventory, parent = undefined) => {
     });
 
     let materialFamily;
-    if (materialData.family) {
-      materialFamily = await createMaterials(
-        materialData.family,
-        inventory,
-        material
-      );
+    if (family) {
+      materialFamily = await createMaterials(family, inventory, material);
     }
 
-    let items;
-    if (materialData.items) {
-      items = await createItems(materialData.items, material);
+    let itemsList;
+    if (items) {
+      itemsList = await createItems(items, material);
     }
 
     materialsData.push({
       material,
       family: materialFamily,
-      items,
+      items: itemsList,
     });
   }
 
@@ -266,7 +252,7 @@ module.exports = {
 
       warehouseSchema.warehouse = warehouse;
       if (!req.body.warehouse.zones) {
-        const zones = createZones(req.body.warehouse.zones, warehouse);
+        const zones = await createZones(req.body.warehouse.zones, warehouse);
         if (!zones) {
           res.status(400).send({
             success: false,
@@ -302,13 +288,10 @@ module.exports = {
         });
         return;
       }
-      inventorySchema.inventory = inventory;
+      inventorySchema.inventory = inventory.toObject();
 
       if (req.body.inventory.materials) {
-        const materials = createMaterials(
-          req.body.inventory.materials,
-          inventory
-        );
+        const materials = await createMaterials(req.body.inventory.materials, inventory);
         if (!materials) {
           res.status(400).send({
             success: false,
