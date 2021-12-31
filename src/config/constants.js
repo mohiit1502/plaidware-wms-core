@@ -12,6 +12,17 @@ const UserActions = [
   "Receive",
 ];
 
+const LevelPositions = [
+  "LDB",
+  "LDF",
+  "LUB",
+  "LUF",
+  "RDB",
+  "RDF",
+  "RUB",
+  "RUF",
+];
+
 const InventoryScopes = ["Inventory", "Material", "Item"];
 
 const WarehouseScopes = [
@@ -40,6 +51,8 @@ const CustomAttributeTypes = [
   "Enumerable",
 ];
 
+const SublevelInventoryTypes = ["Inventory", "Material", "Item"];
+
 const AUTHENTICATION_FAILURE_ERROR_MESSAGE = "Authentication Failed!";
 const AUTHORIZATION_FAILURE_ERROR_MESSAGE =
   "User not permitted due to lack of access!";
@@ -52,7 +65,9 @@ module.exports = {
   WarehouseScopes,
   InventoryTypes,
   CustomAttributeTypes,
+  SublevelInventoryTypes,
   SubLevelTypes,
+  LevelPositions,
   SUPER_ADMIN_ROLE: "super-admin",
   COMPANY_ADMIN_ROLE: "company-admin",
   WAREHOUSE_ADMIN_ROLE: "warehouse-admin",
