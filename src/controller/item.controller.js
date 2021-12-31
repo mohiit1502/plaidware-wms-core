@@ -34,7 +34,7 @@ module.exports = {
   createItem: async (req, res, next) => {
     let material;
     if (req.body.materialId && mongoose.isValidObjectId(req.body.materialId)) {
-      material = await Material.findById(material);
+      material = await Material.findById(req.body.materialId);
     }
     const item = {
       commonName: req.body.commonName,
@@ -50,12 +50,14 @@ module.exports = {
       countPerPallet: req.body.countPerPallet,
       countPerPalletPackage: req.body.countPerPalletPackage,
       customAttributes: req.body.customAttributes,
-      material,
+      material: material,
     };
 
-    if (Object.values(item).every((_) => _)) {
-      res.status(400).send("Missing params param");
-      return;
+    for (const key of Object.keys(item)) {
+      if (item[key] === undefined) {
+        res.status(400).send({ success: false, error: `Missing required param: "${key}"` });
+        return;
+      }
     }
 
     try {
@@ -77,6 +79,10 @@ module.exports = {
    */
   updateItemByID: async (req, res, next) => {
     const { id } = req.params;
+    let material;
+    if (req.body.materialId && mongoose.isValidObjectId(req.body.materialId)) {
+      material = await Material.findById(req.body.materialId);
+    }
 
     if (!id) {
       res.status(400).send("Missing id param");
@@ -97,6 +103,7 @@ module.exports = {
       countPerPallet: req.body.countPerPallet,
       countPerPalletPackage: req.body.countPerPalletPackage,
       customAttributes: req.body.customAttributes,
+      material: material,
     };
 
     try {
@@ -165,6 +172,7 @@ module.exports = {
           formalName: 1,
           description: 1,
           manufacturer: 1,
+          material: 1,
           size: 1,
           color: 1,
           type: 1,
@@ -176,7 +184,7 @@ module.exports = {
           customAttributes: 1,
         },
         { skip: page * perPage, limit: perPage }
-      );
+      ).populate({ path: "material" });
       if (!itemData) {
         res.status(404);
         return;
