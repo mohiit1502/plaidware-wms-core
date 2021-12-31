@@ -28,7 +28,7 @@ const schema = new mongoose.Schema(
           type: String,
           enum: SubLevelTypes,
         },
-        postitions: [
+        positions: [
           {
             type: String,
             enum: LevelPositions,

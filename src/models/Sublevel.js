@@ -38,7 +38,7 @@ const schema = new mongoose.Schema(
           type: String,
           enum: SubLevelTypes,
         },
-        postitions: [
+        positions: [
           {
             type: String,
             enum: LevelPositions,
@@ -55,7 +55,7 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    preffered_inventory: [
+    preferred_inventory: [
       {
         id: {
           type: mongoose.Schema.Types.ObjectId,
