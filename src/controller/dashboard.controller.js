@@ -60,7 +60,7 @@ const createAreas = async (areas, zone) => {
 
     await areaObj.save();
     if (area.rows) {
-      areaObj.rows = await createRows(zone.areas, area);
+      areaObj.rows = await createRows(area.rows, areaObj);
     }
     areasArr.push(areaObj);
   }
@@ -80,7 +80,7 @@ const createRows = async (rows, area) => {
 
     await rowObj.save();
     if (row.bays) {
-      rowObj.bays = await createBays(row.bays, row);
+      rowObj.bays = await createBays(row.bays, rowObj);
     }
     rowsArr.push(rowObj);
   }
@@ -101,7 +101,7 @@ const createBays = async (bays, row) => {
 
     await bayObj.save();
     if (bay.levels) {
-      bayObj.levels = await createLevels(bay.levels, bay);
+      bayObj.levels = await createLevels(bay.levels, bayObj);
     }
     baysArr.push(bayObj);
   }
@@ -120,21 +120,16 @@ const createLevels = async (levels, bay) => {
     });
 
     await levelObj.save();
-    if (level.levels) {
-      levelObj.subLevels = await createSublevels(level.subLevels, level);
+    if (level.subLevels) {
+      levelObj.sub_levels = await createSublevels(level.subLevels, levelObj);
     }
     levelsArr.push(levelObj);
   }
   return levelsArr;
 };
 
-const createSublevels = async (
-  subLevels,
-  level,
-  parent = undefined,
-  depth = 0
-) => {
-  const subLevelsArr = [];
+const createSublevels = async (subLevels, level, parent = undefined, depth = 0) => {
+  const sub_levels_list = [];
   for (const subLevel of subLevels) {
     const subLevelObj = await Sublevel.create({
       name: subLevel.name,
@@ -142,33 +137,30 @@ const createSublevels = async (
       specs: subLevel.specs,
       main_level_id: level._id,
       current_depth: depth,
-      parent_subLevel_id: parent ? parent._id : undefined,
+      parent_sublevel_id: parent ? parent._id : undefined,
       has_inventory: subLevel.has_inventory,
-      inventory: subLevel.inventory,
+      preferred_inventory: subLevel.preferred_inventory,
     });
 
-    if (subLevel.sub_levels) {
-      const subSubLevels = await createSublevels(
-        subLevel.sub_levels,
-        level,
-        subLevelObj,
-        depth + 1
-      );
+    const sub_levels = {
+      positions: subLevel.positions,
+      type: subLevel.type,
+      sub_level_id: subLevelObj._id,
+    };
+    sub_levels_list.push(sub_levels);
 
-      subLevelObj.sub_levels = subSubLevels.map((_) => {
-        return {
-          type: _.type,
-          depth: _.depth,
-          sub_level_id: _._id,
-        };
-      });
+    if (depth > 0 && parent) {
+      parent.sub_levels = parent.sub_levels.concat(sub_levels);
 
-      await subLevelObj.save();
+      await parent.save();
     }
 
-    subLevelsArr.push(subLevelObj);
+    if (subLevel.sub_levels) {
+      subLevelObj.sub_levels = await createSublevels(subLevel.sub_levels, level, subLevelObj, depth + 1);
+      await subLevelObj.save();
+    }
   }
-  return subLevelsArr;
+  return sub_levels_list;
 };
 
 const createInventory = async ({ name, type }) => {
@@ -212,7 +204,7 @@ const createItems = async (items, material) => {
 
 const createMaterials = async (materials, inventory, parent = undefined) => {
   const materialsData = [];
-  for (const materialData of materials) {
+  for (const { name, family, items } of materials) {
     const material = await Material.create({
       name,
       parent,
@@ -220,23 +212,19 @@ const createMaterials = async (materials, inventory, parent = undefined) => {
     });
 
     let materialFamily;
-    if (materialData.family) {
-      materialFamily = await createMaterials(
-        materialData.family,
-        inventory,
-        material
-      );
+    if (family) {
+      materialFamily = await createMaterials(family, inventory, material);
     }
 
-    let items;
-    if (materialData.items) {
-      items = await createItems(materialData.items, material);
+    let itemsList;
+    if (items) {
+      itemsList = await createItems(items, material);
     }
 
     materialsData.push({
       material,
       family: materialFamily,
-      items,
+      items: itemsList,
     });
   }
 
@@ -265,8 +253,8 @@ module.exports = {
       }
 
       warehouseSchema.warehouse = warehouse;
-      if (!req.body.warehouse.zones) {
-        const zones = createZones(req.body.warehouse.zones, warehouse);
+      if (req.body.warehouse.zones !== undefined && Array.isArray(req.body.warehouse.zones)) {
+        const zones = await createZones(req.body.warehouse.zones, warehouse);
         if (!zones) {
           res.status(400).send({
             success: false,
@@ -302,13 +290,10 @@ module.exports = {
         });
         return;
       }
-      inventorySchema.inventory = inventory;
+      inventorySchema.inventory = inventory.toObject();
 
       if (req.body.inventory.materials) {
-        const materials = createMaterials(
-          req.body.inventory.materials,
-          inventory
-        );
+        const materials = await createMaterials(req.body.inventory.materials, inventory);
         if (!materials) {
           res.status(400).send({
             success: false,

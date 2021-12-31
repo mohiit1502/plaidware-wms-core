@@ -19,7 +19,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send(warehouseData);
+      res.send(warehouseData);
     } catch (error) {
       next(error);
     }
@@ -49,7 +49,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send(warehouseData);
+      res.send(warehouseData);
     } catch (error) {
       next(error);
     }
@@ -108,7 +108,7 @@ module.exports = {
       if (company_id) warehouseData.company_id = mongoose.Types.ObjectId(company_id);
 
       await warehouseData.save();
-      req.send(warehouseData);
+      res.send(warehouseData);
     } catch (error) {
       next(error);
     }

@@ -22,7 +22,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: itemData });
+      res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
     }
@@ -34,7 +34,7 @@ module.exports = {
   createItem: async (req, res, next) => {
     let material;
     if (req.body.materialId && mongoose.isValidObjectId(req.body.materialId)) {
-      material = await Material.findById(material);
+      material = await Material.findById(req.body.materialId);
     }
     const item = {
       commonName: req.body.commonName,
@@ -50,12 +50,14 @@ module.exports = {
       countPerPallet: req.body.countPerPallet,
       countPerPalletPackage: req.body.countPerPalletPackage,
       customAttributes: req.body.customAttributes,
-      material,
+      material: material,
     };
 
-    if (Object.values(item).every((_) => _)) {
-      res.status(400).send("Missing params param");
-      return;
+    for (const key of Object.keys(item)) {
+      if (item[key] === undefined) {
+        res.status(400).send({ success: false, error: `Missing required param: "${key}"` });
+        return;
+      }
     }
 
     try {
@@ -66,7 +68,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: itemData });
+      res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
     }
@@ -77,6 +79,10 @@ module.exports = {
    */
   updateItemByID: async (req, res, next) => {
     const { id } = req.params;
+    let material;
+    if (req.body.materialId && mongoose.isValidObjectId(req.body.materialId)) {
+      material = await Material.findById(req.body.materialId);
+    }
 
     if (!id) {
       res.status(400).send("Missing id param");
@@ -97,6 +103,7 @@ module.exports = {
       countPerPallet: req.body.countPerPallet,
       countPerPalletPackage: req.body.countPerPalletPackage,
       customAttributes: req.body.customAttributes,
+      material: material,
     };
 
     try {
@@ -113,7 +120,7 @@ module.exports = {
       }
 
       await itemData.save();
-      req.send({ success: true, data: itemData });
+      res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
     }
@@ -124,8 +131,8 @@ module.exports = {
    */
   getItemsByFilter: async (req, res, next) => {
     let { family, type, page, perPage } = req.query;
-    page = page || 0;
-    perPage = perPage || 10;
+    page = page ? parseInt(page) : 0;
+    perPage = perPage ? parseInt(perPage) : 10;
     let inventories;
     let materials;
     let itemFilters;
@@ -165,6 +172,7 @@ module.exports = {
           formalName: 1,
           description: 1,
           manufacturer: 1,
+          material: 1,
           size: 1,
           color: 1,
           type: 1,
@@ -176,12 +184,12 @@ module.exports = {
           customAttributes: 1,
         },
         { skip: page * perPage, limit: perPage }
-      );
+      ).populate({ path: "material" });
       if (!itemData) {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: itemData });
+      res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
     }

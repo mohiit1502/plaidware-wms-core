@@ -60,7 +60,7 @@ module.exports = {
         main_level_id: parent_main_level_id,
         current_depth: parent_current_depth + 1,
         parent_sublevel_id: mongoose.Types.ObjectId(parent_id),
-        preffered_inventory: [],
+        preferred_inventory: [],
       });
 
       await addSublevelToParent({ type, positions, sub_level_id: sublevelData._id.toString() }, parent_id, parentIsLevel);
@@ -129,7 +129,7 @@ module.exports = {
   },
 
   /**
-   * Add preffered_inventory to a sublevel
+   * Add preferred_inventory to a sublevel
    */
   addInventory: async (req, res, next) => {
     const { id, inventory } = req.body;
@@ -144,9 +144,9 @@ module.exports = {
       return;
     }
     try {
-      sublevelData.preffered_inventory.push(...inventory);
+      sublevelData.preferred_inventory.push(...inventory);
       await sublevelData.save();
-      res.send({ success: true, data: sublevelData.preffered_inventory });
+      res.send({ success: true, data: sublevelData.preferred_inventory });
     } catch (err) {
       next(err);
     }

@@ -30,8 +30,8 @@ const getScopes = async (scopes, searchSet) => {
 module.exports = {
   getAllPermissions: async (req, res, next) => {
     let { page, perPage } = req.query;
-    page = page || 0;
-    perPage = perPage || 10;
+    page = page ? parseInt(page) : 0;
+    perPage = perPage ? parseInt(perPage) : 10;
 
     const result = await UserPermission.find(
       {},

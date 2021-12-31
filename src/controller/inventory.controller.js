@@ -19,7 +19,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: inventoryData });
+      res.send({ success: true, data: inventoryData });
     } catch (error) {
       next(error);
     }
@@ -47,7 +47,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: inventoryData });
+      res.send({ success: true, data: inventoryData });
     } catch (error) {
       next(error);
     }
@@ -82,7 +82,7 @@ module.exports = {
       if (type) inventoryData.type = type;
 
       await inventoryData.save();
-      req.send({ success: true, data: inventoryData });
+      res.send({ success: true, data: inventoryData });
     } catch (error) {
       next(error);
     }
@@ -92,11 +92,11 @@ module.exports = {
    */
   getInventoryByType: async (req, res, next) => {
     let { type, page, perPage } = req.query;
-    page = page || 0;
-    perPage = perPage || 10;
+    page = page ? parseInt(page) : 0;
+    perPage = perPage ? parseInt(perPage) : 10;
 
     if (!type || !InventoryTypes.includes(type)) {
-      res.status(400).send("Missing/Invalid type param");
+      res.status(400).send({ success: false, error: "Missing/Invalid type param" });
       return;
     }
 
@@ -104,13 +104,13 @@ module.exports = {
       const inventoryData = await Inventory.find(
         { type: type },
         { id: 1, name: 1, type: 1 },
-        { skip: page * perPage, limit: perPage }
+        { skip: parseInt(page) * parseInt(perPage), limit: parseInt(perPage) }
       );
       if (!inventoryData) {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: inventoryData });
+      res.send({ success: true, data: inventoryData });
     } catch (error) {
       next(error);
     }

@@ -3,9 +3,8 @@ const UserRole = require("../models/UserRole");
 const UserPermission = require("../models/UserPermission");
 
 const getValidPermissions = async (permissions) => {
-  const verifiedPermissions = permissions.filter((permission) =>
-    mongoose.isValidObjectId(permission)
-  );
+  const verifiedPermissions = permissions.filter((permission) => mongoose.isValidObjectId(permission));
+  if (verifiedPermissions.length === 0) return [];
   const permissionObjects = await UserPermission.find({
     id: { $in: verifiedPermissions },
   }).select({ _id: 1 });
@@ -15,8 +14,8 @@ const getValidPermissions = async (permissions) => {
 module.exports = {
   getAllRoles: async (req, res, next) => {
     let { page, perPage } = req.query;
-    page = page || 0;
-    perPage = perPage || 10;
+    page = page ? parseInt(page) : 0;
+    perPage = perPage ? parseInt(perPage) : 10;
 
     const result = await UserRole.find(
       {},

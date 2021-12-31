@@ -20,7 +20,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: materialData });
+      res.send({ success: true, data: materialData });
     } catch (error) {
       next(error);
     }
@@ -35,7 +35,7 @@ module.exports = {
     try {
       let parent;
       if (parentId && mongoose.isValidObjectId(parentId)) {
-        parent = await Material.findById(parent);
+        parent = await Material.findById(parentId);
       } else if (parentId && !mongoose.isValidObjectId(parentId)) {
         res.status(400).send("Invalid params parentId");
         return;
@@ -60,7 +60,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: materialData });
+      res.send({ success: true, data: materialData });
     } catch (error) {
       next(error);
     }
@@ -97,7 +97,7 @@ module.exports = {
 
       let parent;
       if (parentId && mongoose.isValidObjectId(parentId)) {
-        parent = await Material.findById(parent);
+        parent = await Material.findById(parentId);
         materialData.parent = parent;
       } else if (parentId && !mongoose.isValidObjectId(parentId)) {
         res.status(400).send("Invalid params parentId");
@@ -108,13 +108,13 @@ module.exports = {
       if (inventoryId && mongoose.isValidObjectId(inventoryId)) {
         inventory = await Inventory.findById(inventoryId);
         materialData.inventory = inventory;
-      } else {
+      } else if (inventoryId && !mongoose.isValidObjectId(inventoryId)) {
         res.status(400).send("Invalid params inventoryId");
         return;
       }
 
       await materialData.save();
-      req.send({ success: true, data: materialData });
+      res.send({ success: true, data: materialData });
     } catch (error) {
       next(error);
     }
@@ -124,8 +124,8 @@ module.exports = {
    */
   getMaterialByInventory: async (req, res, next) => {
     let { inventory, page, perPage } = req.query;
-    page = page || 0;
-    perPage = perPage || 10;
+    page = page ? parseInt(page) : 0;
+    perPage = perPage ? parseInt(perPage) : 0;
 
     if (!inventory || !mongoose.isValidObjectId(inventory)) {
       res.status(400).send("Missing inventory param");
@@ -144,7 +144,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send({ success: true, data: materialData });
+      res.send({ success: true, data: materialData });
     } catch (error) {
       next(error);
     }

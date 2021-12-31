@@ -18,7 +18,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send(companyData);
+      res.send(companyData);
     } catch (error) {
       next(error);
     }
@@ -48,7 +48,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send(companyData);
+      res.send(companyData);
     } catch (error) {
       next(error);
     }
@@ -85,7 +85,7 @@ module.exports = {
       if (business_info) companyData.business_info = business_info;
 
       await companyData.save();
-      req.send(companyData);
+      res.send(companyData);
     } catch (error) {
       next(error);
     }
