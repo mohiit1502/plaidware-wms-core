@@ -8,7 +8,7 @@ const Bay = require("../models/Bay");
 const Level = require("../models/Level");
 const Sublevel = require("../models/Sublevel");
 const Inventory = require("../models/Inventory");
-const Material = require("../models/Material");
+const WidgetFamily = require("../models/WidgetFamily");
 const Item = require("../models/Item");
 
 const createWarehouse = async ({ name, address, specs, company_id }) => {
@@ -174,7 +174,7 @@ const createInventory = async ({ name, type }) => {
   });
 };
 
-const createItems = async (items, material) => {
+const createItems = async (items, widgetFamily) => {
   const itemsArray = [];
   for (const itemData of items) {
     const item = {
@@ -191,7 +191,7 @@ const createItems = async (items, material) => {
       countPerPallet: itemData.countPerPallet,
       countPerPalletPackage: itemData.countPerPalletPackage,
       customAttributes: itemData.customAttributes,
-      material,
+      widgetFamily,
     };
 
     if (Object.values(item).every((_) => _)) {
@@ -202,33 +202,33 @@ const createItems = async (items, material) => {
   return itemsArray;
 };
 
-const createMaterials = async (materials, inventory, parent = undefined) => {
-  const materialsData = [];
-  for (const { name, family, items } of materials) {
-    const material = await Material.create({
+const createWidgetFamilies = async (widgetFamilies, inventory, parent = undefined) => {
+  const widgetFamiliesData = [];
+  for (const { name, family, items } of widgetFamilies) {
+    const widgetFamily = await WidgetFamily.create({
       name,
       parent,
       inventory,
     });
 
-    let materialFamily;
+    let widgetFamilyFamily;
     if (family) {
-      materialFamily = await createMaterials(family, inventory, material);
+      widgetFamilyFamily = await createWidgetFamilies(family, inventory, widgetFamily);
     }
 
     let itemsList;
     if (items) {
-      itemsList = await createItems(items, material);
+      itemsList = await createItems(items, widgetFamily);
     }
 
-    materialsData.push({
-      material,
-      family: materialFamily,
+    widgetFamiliesData.push({
+      widgetFamily,
+      family: widgetFamilyFamily,
       items: itemsList,
     });
   }
 
-  return materialsData;
+  return widgetFamiliesData;
 };
 
 module.exports = {
@@ -292,17 +292,17 @@ module.exports = {
       }
       inventorySchema.inventory = inventory.toObject();
 
-      if (req.body.inventory.materials) {
-        const materials = await createMaterials(req.body.inventory.materials, inventory);
-        if (!materials) {
+      if (req.body.inventory.widgetFamilies) {
+        const widgetFamilies = await createWidgetFamilies(req.body.inventory.widgetFamilies, inventory);
+        if (!widgetFamilies) {
           res.status(400).send({
             success: false,
-            message: "Creation of Materials Failed, invalid/missing params",
+            message: "Creation of WidgetFamilies Failed, invalid/missing params",
           });
           return;
         }
 
-        inventorySchema.inventory.materials = materials;
+        inventorySchema.inventory.widgetFamilies = widgetFamilies;
       }
 
       res.send({ success: true, data: inventorySchema });

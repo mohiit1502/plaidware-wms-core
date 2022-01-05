@@ -23,7 +23,7 @@ const LevelPositions = [
   "RUF",
 ];
 
-const InventoryScopes = ["Inventory", "Material", "Item"];
+const InventoryScopes = ["Inventory", "WidgetFamily", "Item"];
 
 const WarehouseScopes = [
   "Warehouse",
@@ -51,7 +51,7 @@ const CustomAttributeTypes = [
   "Enumerable",
 ];
 
-const SublevelInventoryTypes = ["Inventory", "Material", "Item"];
+const SublevelInventoryTypes = ["Inventory", "WidgetFamily", "Item"];
 
 const AUTHENTICATION_FAILURE_ERROR_MESSAGE = "Authentication Failed!";
 const AUTHORIZATION_FAILURE_ERROR_MESSAGE =

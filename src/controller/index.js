@@ -14,7 +14,7 @@ const levelRouter = require("./level.router");
 const sublevelRouter = require("./sublevel.router");
 const dashboardRouter = require("./dashboard.router");
 const inventoryRouter = require("./inventory.router");
-const materialRouter = require("./material.router");
+const widgetFamilyRouter = require("./widgetFamily.router");
 const itemRouter = require("./item.router");
 
 router.use("/user-role", AuthenticateMiddleware, userRoleRouter);
@@ -30,7 +30,7 @@ router.use("/level", levelRouter);
 router.use("/sublevel", sublevelRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/inventory", inventoryRouter);
-router.use("/material", materialRouter);
+router.use("/widget-family", widgetFamilyRouter);
 router.use("/item", itemRouter);
 
 router.get("/", (req, res) => {

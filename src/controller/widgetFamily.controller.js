@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
-const Material = require("../models/Material");
+const WidgetFamily = require("../models/WidgetFamily");
 const Inventory = require("../models/Inventory");
 
 module.exports = {
   /**
-   * Gets the Material data by `id`
+   * Gets the WidgetFamily data by `id`
    */
-  getMaterialByID: async (req, res, next) => {
+  getWidgetFamilyByID: async (req, res, next) => {
     const { id } = req.params;
 
     if (!id) {
@@ -15,27 +15,27 @@ module.exports = {
     }
 
     try {
-      const materialData = await Material.findById(id);
-      if (!materialData) {
+      const widgetFamilyData = await WidgetFamily.findById(id);
+      if (!widgetFamilyData) {
         res.status(404);
         return;
       }
-      res.send({ success: true, data: materialData });
+      res.send({ success: true, data: widgetFamilyData });
     } catch (error) {
       next(error);
     }
   },
 
   /**
-   * Create a Material
+   * Create a WidgetFamily
    */
-  createMaterial: async (req, res, next) => {
+  createWidgetFamily: async (req, res, next) => {
     const { name, parentId, inventoryId } = req.body;
 
     try {
       let parent;
       if (parentId && mongoose.isValidObjectId(parentId)) {
-        parent = await Material.findById(parentId);
+        parent = await WidgetFamily.findById(parentId);
       } else if (parentId && !mongoose.isValidObjectId(parentId)) {
         res.status(400).send("Invalid params parentId");
         return;
@@ -49,27 +49,27 @@ module.exports = {
         return;
       }
 
-      const materialData = new Material({
+      const widgetFamilyData = new WidgetFamily({
         name,
         parent,
         inventory,
       });
 
-      await materialData.save();
-      if (!materialData) {
+      await widgetFamilyData.save();
+      if (!widgetFamilyData) {
         res.status(404);
         return;
       }
-      res.send({ success: true, data: materialData });
+      res.send({ success: true, data: widgetFamilyData });
     } catch (error) {
       next(error);
     }
   },
 
   /**
-   * Update a Material detail
+   * Update a WidgetFamily detail
    */
-  updateMaterialByID: async (req, res, next) => {
+  updateWidgetFamilyByID: async (req, res, next) => {
     const { id } = req.params;
 
     if (!id) {
@@ -85,20 +85,20 @@ module.exports = {
     }
 
     try {
-      const materialData = await Material.findById(id);
-      if (!materialData) {
+      const widgetFamilyData = await WidgetFamily.findById(id);
+      if (!widgetFamilyData) {
         res.status(404);
         return;
       }
 
       if (name) {
-        materialData.name = name;
+        widgetFamilyData.name = name;
       }
 
       let parent;
       if (parentId && mongoose.isValidObjectId(parentId)) {
-        parent = await Material.findById(parentId);
-        materialData.parent = parent;
+        parent = await WidgetFamily.findById(parentId);
+        widgetFamilyData.parent = parent;
       } else if (parentId && !mongoose.isValidObjectId(parentId)) {
         res.status(400).send("Invalid params parentId");
         return;
@@ -107,22 +107,22 @@ module.exports = {
       let inventory;
       if (inventoryId && mongoose.isValidObjectId(inventoryId)) {
         inventory = await Inventory.findById(inventoryId);
-        materialData.inventory = inventory;
+        widgetFamilyData.inventory = inventory;
       } else if (inventoryId && !mongoose.isValidObjectId(inventoryId)) {
         res.status(400).send("Invalid params inventoryId");
         return;
       }
 
-      await materialData.save();
-      res.send({ success: true, data: materialData });
+      await widgetFamilyData.save();
+      res.send({ success: true, data: widgetFamilyData });
     } catch (error) {
       next(error);
     }
   },
   /**
-   * Gets the Material data by `inventory`
+   * Gets the WidgetFamily data by `inventory`
    */
-  getMaterialByInventory: async (req, res, next) => {
+  getWidgetFamilyByInventory: async (req, res, next) => {
     let { inventory, page, perPage } = req.query;
     page = page ? parseInt(page) : 0;
     perPage = perPage ? parseInt(perPage) : 0;
@@ -133,18 +133,18 @@ module.exports = {
     }
 
     try {
-      const materialData = await Material.find(
+      const widgetFamilyData = await WidgetFamily.find(
         { inventory: inventory },
         { id: 1, name: 1, parent: 1, inventory: 1 },
         { skip: page * perPage, limit: perPage }
       )
         .populate({ path: "parent" })
         .populate({ path: "inventory" });
-      if (!materialData) {
+      if (!widgetFamilyData) {
         res.status(404);
         return;
       }
-      res.send({ success: true, data: materialData });
+      res.send({ success: true, data: widgetFamilyData });
     } catch (error) {
       next(error);
     }
