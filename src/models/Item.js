@@ -83,6 +83,17 @@ const schema = new mongoose.Schema(
         },
       },
     ],
+    policiesMetadata: {
+      underStockLevelCount: {
+        type: Number,
+      },
+      overStockLevelCount: {
+        type: Number,
+      },
+      alertStockLevelCount: {
+        type: Number,
+      },
+    },
   },
   {
     timestamps: true,
