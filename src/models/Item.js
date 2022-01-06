@@ -18,9 +18,9 @@ const schema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    material: {
+    widgetFamily: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Material",
+      ref: "WidgetFamily",
       required: true,
     },
     manufacturer: {
@@ -83,6 +83,17 @@ const schema = new mongoose.Schema(
         },
       },
     ],
+    policiesMetadata: {
+      underStockLevelCount: {
+        type: Number,
+      },
+      overStockLevelCount: {
+        type: Number,
+      },
+      alertStockLevelCount: {
+        type: Number,
+      },
+    },
   },
   {
     timestamps: true,

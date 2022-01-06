@@ -9,7 +9,7 @@ const schema = new mongoose.Schema(
     },
     parent: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Material",
+      ref: "WidgetFamily",
     },
     inventory: {
       type: mongoose.Schema.Types.ObjectId,
@@ -22,6 +22,6 @@ const schema = new mongoose.Schema(
   }
 );
 
-const Material = mongoose.model("Material", schema);
+const WidgetFamily = mongoose.model("WidgetFamily", schema);
 
-module.exports = Material;
+module.exports = WidgetFamily;

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Item = require("../models/Item");
-const Material = require("../models/Material");
+const WidgetFamily = require("../models/WidgetFamily");
 const Inventory = require("../models/Inventory");
 const { InventoryTypes } = require("../config/constants");
 
@@ -32,9 +32,9 @@ module.exports = {
    * Create a Item
    */
   createItem: async (req, res, next) => {
-    let material;
-    if (req.body.materialId && mongoose.isValidObjectId(req.body.materialId)) {
-      material = await Material.findById(req.body.materialId);
+    let widgetFamily;
+    if (req.body.widgetFamilyId && mongoose.isValidObjectId(req.body.widgetFamilyId)) {
+      widgetFamily = await WidgetFamily.findById(req.body.widgetFamilyId);
     }
     const item = {
       commonName: req.body.commonName,
@@ -50,7 +50,7 @@ module.exports = {
       countPerPallet: req.body.countPerPallet,
       countPerPalletPackage: req.body.countPerPalletPackage,
       customAttributes: req.body.customAttributes,
-      material: material,
+      widgetFamily: widgetFamily,
     };
 
     for (const key of Object.keys(item)) {
@@ -79,9 +79,9 @@ module.exports = {
    */
   updateItemByID: async (req, res, next) => {
     const { id } = req.params;
-    let material;
-    if (req.body.materialId && mongoose.isValidObjectId(req.body.materialId)) {
-      material = await Material.findById(req.body.materialId);
+    let widgetFamily;
+    if (req.body.widgetFamilyId && mongoose.isValidObjectId(req.body.widgetFamilyId)) {
+      widgetFamily = await WidgetFamily.findById(req.body.widgetFamilyId);
     }
 
     if (!id) {
@@ -103,7 +103,7 @@ module.exports = {
       countPerPallet: req.body.countPerPallet,
       countPerPalletPackage: req.body.countPerPalletPackage,
       customAttributes: req.body.customAttributes,
-      material: material,
+      widgetFamily: widgetFamily,
     };
 
     try {
@@ -134,33 +134,33 @@ module.exports = {
     page = page ? parseInt(page) : 0;
     perPage = perPage ? parseInt(perPage) : 10;
     let inventories;
-    let materials;
+    let widgetFamilies;
     let itemFilters;
     try {
       if (type && InventoryTypes.includes(type)) {
         inventories = await Inventory.find({ type });
       }
 
-      const materialFilters = [];
+      const widgetFamilyFilters = [];
       if (inventories) {
-        materialFilters.push({
+        widgetFamilyFilters.push({
           inventory: { $in: inventories.map((_) => _._id) },
         });
       }
 
       if (family) {
-        materialFilters.push({
+        widgetFamilyFilters.push({
           name: family,
         });
       }
-      if (materialFilters.length > 0) {
-        materials = await Material.find({
-          $or: materialFilters,
+      if (widgetFamilyFilters.length > 0) {
+        widgetFamilies = await WidgetFamily.find({
+          $or: widgetFamilyFilters,
         });
       }
 
-      if (materials) {
-        itemFilters = { material: { $in: materials.map((_) => _._id) } };
+      if (widgetFamilies) {
+        itemFilters = { widgetFamily: { $in: widgetFamilies.map((_) => _._id) } };
       } else {
         itemFilters = {};
       }
@@ -172,7 +172,7 @@ module.exports = {
           formalName: 1,
           description: 1,
           manufacturer: 1,
-          material: 1,
+          widgetFamily: 1,
           size: 1,
           color: 1,
           type: 1,
@@ -184,7 +184,7 @@ module.exports = {
           customAttributes: 1,
         },
         { skip: page * perPage, limit: perPage }
-      ).populate({ path: "material" });
+      ).populate({ path: "widgetFamily" });
       if (!itemData) {
         res.status(404);
         return;
