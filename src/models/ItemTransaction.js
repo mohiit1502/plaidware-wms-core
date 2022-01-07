@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { ItemTransactionTypes } = require("../config/constants");
+const { ItemTransactionTypes, ReportItemForTypes } = require("../config/constants");
 
 const schema = new mongoose.Schema(
   {
@@ -111,10 +111,10 @@ const CheckOutItemTransaction = ItemTransaction.discriminator(
 const ReportItemTransaction = ItemTransaction.discriminator(
   "Report",
   new mongoose.Schema({
-    for: {
+    reportingFor: {
       type: String,
       required: true,
-      enum: ["LOCATION", "ISSUE", "INCIDENT"]
+      enum: ReportItemForTypes,
     },
     details: {
       type: String,

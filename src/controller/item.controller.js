@@ -6,15 +6,15 @@ const {
   PickItemTransaction,
   PutItemTransaction,
   ReserveItemTransaction,
-  // CheckInItemTransaction,
-  // CheckOutItemTransaction,
-  // ReportItemTransaction,
+  CheckInItemTransaction,
+  CheckOutItemTransaction,
+  ReportItemTransaction,
   // AdjustItemTransaction,
 } = require("../models/ItemTransaction");
 
 const ItemAssociation = require("../models/ItemAssociation");
 const Sublevel = require("../models/Sublevel");
-const { InventoryTypes } = require("../config/constants");
+const { InventoryTypes, ReportItemForTypes } = require("../config/constants");
 
 module.exports = {
   /**
@@ -306,7 +306,7 @@ module.exports = {
       await itemAssociation.save();
 
       await ReserveItemTransaction.create({
-        type: "PUT",
+        type: "RESERVE",
         performedOn: item,
         performedBy: res.locals.user,
         reserveQuantity: reserveQuantity,
@@ -318,13 +318,99 @@ module.exports = {
     }
   },
   checkInItem: async (req, res, next) => {
-    res.status(500).send({ success: false, error: "Not Implemented" });
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { checkInMeterReading, hasIssue, issueDescription } = req.body;
+      if (!(checkInMeterReading && checkInMeterReading > 0)) {
+        res.status(400).send("Invalid value for checkInMeterReading");
+        return;
+      }
+
+      await CheckInItemTransaction.create({
+        type: "CHECK-IN",
+        performedOn: item,
+        performedBy: res.locals.user,
+        checkInMeterReading: checkInMeterReading,
+        hasIssue: hasIssue,
+        issueDescription: hasIssue ? issueDescription : "",
+      });
+    } catch (error) {
+      next(error);
+    }
   },
   checkOutItem: async (req, res, next) => {
-    res.status(500).send({ success: false, error: "Not Implemented" });
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { checkOutMeterReading, job, usageReason } = req.body;
+      if (!(checkOutMeterReading && checkOutMeterReading > 0) || !(job && mongoose.isValidObjectId(job))) {
+        res.status(400).send("Invalid value for checkOutMeterReading/job");
+        return;
+      }
+
+      await CheckOutItemTransaction.create({
+        type: "CHECK-OUT",
+        performedOn: item,
+        performedBy: res.locals.user,
+        checkOutMeterReading: checkOutMeterReading,
+        job: job,
+        usageReason: usageReason ? usageReason : "",
+      });
+    } catch (error) {
+      next(error);
+    }
   },
   reportItem: async (req, res, next) => {
-    res.status(500).send({ success: false, error: "Not Implemented" });
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { reportingFor, details } = req.body;
+      if (!(reportingFor && ReportItemForTypes.includes(reportingFor))) {
+        res.status(400).send("Invalid value for checkOutMeterReading/job");
+        return;
+      }
+
+      await ReportItemTransaction.create({
+        type: "PUT",
+        performedOn: item,
+        performedBy: res.locals.user,
+        reportingFor: reportingFor,
+        details: details ? details : "",
+      });
+    } catch (error) {
+      next(error);
+    }
   },
   adjustItem: async (req, res, next) => {
     res.status(500).send({ success: false, error: "Not Implemented" });
