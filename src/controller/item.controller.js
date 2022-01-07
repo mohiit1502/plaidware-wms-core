@@ -206,7 +206,7 @@ module.exports = {
       next(error);
     }
   },
-  pickItem: async (req, res, next) => {
+  putItem: async (req, res, next) => {
     try {
       const { id } = req.params;
       if (!id || mongoose.isValidObjectId(id)) {
@@ -243,7 +243,8 @@ module.exports = {
       next(error);
     }
   },
-  putItem: async (req, res, next) => {
+
+  pickItem: async (req, res, next) => {
     try {
       const { id } = req.params;
       if (!id || mongoose.isValidObjectId(id)) {
@@ -280,6 +281,7 @@ module.exports = {
       next(error);
     }
   },
+
   reserveItem: async (req, res, next) => {
     try {
       const { id } = req.params;
@@ -317,6 +319,7 @@ module.exports = {
       next(error);
     }
   },
+
   checkInItem: async (req, res, next) => {
     try {
       const { id } = req.params;
@@ -349,6 +352,7 @@ module.exports = {
       next(error);
     }
   },
+
   checkOutItem: async (req, res, next) => {
     try {
       const { id } = req.params;
@@ -381,6 +385,7 @@ module.exports = {
       next(error);
     }
   },
+
   reportItem: async (req, res, next) => {
     try {
       const { id } = req.params;
@@ -412,7 +417,49 @@ module.exports = {
       next(error);
     }
   },
+
   adjustItem: async (req, res, next) => {
-    res.status(500).send({ success: false, error: "Not Implemented" });
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { recountedQuantity, damagedQuantity, subLevel } = req.body;
+      if (!(recountedQuantity && recountedQuantity > 0) || !(subLevel && mongoose.isValidObjectId(subLevel))) {
+        res.status(400).send("Invalid value for pickupQuantity/subLevel");
+        return;
+      }
+
+      const subLevelObj = await Sublevel.findById(subLevel);
+      const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, sub_level_id: subLevelObj._id });
+      const lastRecordedQuantity = itemAssociation.totalQuantity;
+      const varianceRecordedInQuantity = itemAssociation.totalQuantity - recountedQuantity;
+      const totalAdjustment = varianceRecordedInQuantity + damagedQuantity;
+      itemAssociation.totalQuantity = itemAssociation.totalQuantity - totalAdjustment;
+      itemAssociation.availableQuantity = itemAssociation.availableQuantity - totalAdjustment;
+      await itemAssociation.save();
+
+      await PutItemTransaction.create({
+        type: "PUT",
+        performedOn: item,
+        performedBy: res.locals.user,
+        lastRecordedQuantity,
+        recountedQuantity,
+        varianceRecordedInQuantity,
+        damagedQuantity,
+        totalAdjustment,
+        newAdjustedQuantity: itemAssociation.totalQuantity,
+      });
+    } catch (error) {
+      next(error);
+    }
   },
 };
