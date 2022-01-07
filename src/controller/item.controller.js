@@ -9,7 +9,7 @@ const {
   CheckInItemTransaction,
   CheckOutItemTransaction,
   ReportItemTransaction,
-  // AdjustItemTransaction,
+  AdjustItemTransaction,
 } = require("../models/ItemTransaction");
 
 const ItemAssociation = require("../models/ItemAssociation");
@@ -232,8 +232,8 @@ module.exports = {
       itemAssociation.availableQuantity = itemAssociation.availableQuantity + putQuantity;
       await itemAssociation.save();
 
-      await PickItemTransaction.create({
-        type: "PICK",
+      await PutItemTransaction.create({
+        type: "PUT",
         performedOn: item,
         performedBy: res.locals.user,
         putQuantity: putQuantity,
@@ -270,8 +270,8 @@ module.exports = {
       itemAssociation.availableQuantity = itemAssociation.availableQuantity - pickupQuantity;
       await itemAssociation.save();
 
-      await PutItemTransaction.create({
-        type: "PUT",
+      await PickItemTransaction.create({
+        type: "PICK",
         performedOn: item,
         performedBy: res.locals.user,
         pickupQuantity: pickupQuantity,
@@ -407,7 +407,7 @@ module.exports = {
       }
 
       await ReportItemTransaction.create({
-        type: "PUT",
+        type: "REPORT",
         performedOn: item,
         performedBy: res.locals.user,
         reportingFor: reportingFor,
@@ -447,8 +447,8 @@ module.exports = {
       itemAssociation.availableQuantity = itemAssociation.availableQuantity - totalAdjustment;
       await itemAssociation.save();
 
-      await PutItemTransaction.create({
-        type: "PUT",
+      await AdjustItemTransaction.create({
+        type: "ADJUST",
         performedOn: item,
         performedBy: res.locals.user,
         lastRecordedQuantity,
