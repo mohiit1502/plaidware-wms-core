@@ -33,6 +33,10 @@ const PutItemTransaction = ItemTransaction.discriminator(
       type: Number,
       required: true,
     },
+    subLevel: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Sublevel"
+    },
   })
 );
 
@@ -42,6 +46,10 @@ const PickItemTransaction = ItemTransaction.discriminator(
     pickupQuantity: {
       type: Number,
       required: true,
+    },
+    subLevel: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Sublevel",
     },
   })
 );

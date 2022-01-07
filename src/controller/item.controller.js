@@ -2,6 +2,18 @@ const mongoose = require("mongoose");
 const Item = require("../models/Item");
 const WidgetFamily = require("../models/WidgetFamily");
 const Inventory = require("../models/Inventory");
+const {
+  PickItemTransaction,
+  PutItemTransaction,
+  ReserveItemTransaction,
+  // CheckInItemTransaction,
+  // CheckOutItemTransaction,
+  // ReportItemTransaction,
+  // AdjustItemTransaction,
+} = require("../models/ItemTransaction");
+
+const ItemAssociation = require("../models/ItemAssociation");
+const Sublevel = require("../models/Sublevel");
 const { InventoryTypes } = require("../config/constants");
 
 module.exports = {
@@ -195,13 +207,115 @@ module.exports = {
     }
   },
   pickItem: async (req, res, next) => {
-    res.status(500).send({ success: false, error: "Not Implemented" });
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { putQuantity, subLevel } = req.body;
+      if (!(putQuantity && putQuantity > 0) || !(subLevel && mongoose.isValidObjectId(subLevel))) {
+        res.status(400).send("Invalid value for putQuantity/subLevel");
+        return;
+      }
+
+      const subLevelObj = await Sublevel.findById(subLevel);
+      const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, sub_level_id: subLevelObj._id });
+      itemAssociation.totalQuantity = itemAssociation.totalQuantity + putQuantity;
+      itemAssociation.availableQuantity = itemAssociation.availableQuantity + putQuantity;
+      await itemAssociation.save();
+
+      await PickItemTransaction.create({
+        type: "PICK",
+        performedOn: item,
+        performedBy: res.locals.user,
+        putQuantity: putQuantity,
+        subLevel: subLevelObj,
+      });
+    } catch (error) {
+      next(error);
+    }
   },
   putItem: async (req, res, next) => {
-    res.status(500).send({ success: false, error: "Not Implemented" });
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { pickupQuantity, subLevel } = req.body;
+      if (!(pickupQuantity && pickupQuantity > 0) || !(subLevel && mongoose.isValidObjectId(subLevel))) {
+        res.status(400).send("Invalid value for pickupQuantity/subLevel");
+        return;
+      }
+
+      const subLevelObj = await Sublevel.findById(subLevel);
+      const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, sub_level_id: subLevelObj._id });
+      itemAssociation.totalQuantity = itemAssociation.totalQuantity - pickupQuantity;
+      itemAssociation.availableQuantity = itemAssociation.availableQuantity - pickupQuantity;
+      await itemAssociation.save();
+
+      await PutItemTransaction.create({
+        type: "PUT",
+        performedOn: item,
+        performedBy: res.locals.user,
+        pickupQuantity: pickupQuantity,
+        subLevel: subLevelObj,
+      });
+    } catch (error) {
+      next(error);
+    }
   },
   reserveItem: async (req, res, next) => {
-    res.status(500).send({ success: false, error: "Not Implemented" });
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { reserveQuantity, job, pickupDate } = req.body;
+      if (!(reserveQuantity && reserveQuantity > 0) || !(job && mongoose.isValidObjectId(job)) || !(pickupDate && Date.parse(pickupDate))) {
+        res.status(400).send("Invalid value for reserveQuantity/job/pickupDate");
+        return;
+      }
+
+      const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, availableQuantity: { $gte: reserveQuantity } });
+      itemAssociation.reservedQuantity = itemAssociation.reservedQuantity + reserveQuantity;
+      itemAssociation.availableQuantity = itemAssociation.availableQuantity - reserveQuantity;
+      await itemAssociation.save();
+
+      await ReserveItemTransaction.create({
+        type: "PUT",
+        performedOn: item,
+        performedBy: res.locals.user,
+        reserveQuantity: reserveQuantity,
+        job: job,
+        pickupDate: Date.parse(pickupDate),
+      });
+    } catch (error) {
+      next(error);
+    }
   },
   checkInItem: async (req, res, next) => {
     res.status(500).send({ success: false, error: "Not Implemented" });
