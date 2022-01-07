@@ -2,7 +2,19 @@ const mongoose = require("mongoose");
 const Item = require("../models/Item");
 const WidgetFamily = require("../models/WidgetFamily");
 const Inventory = require("../models/Inventory");
-const { InventoryTypes } = require("../config/constants");
+const {
+  PickItemTransaction,
+  PutItemTransaction,
+  ReserveItemTransaction,
+  CheckInItemTransaction,
+  CheckOutItemTransaction,
+  ReportItemTransaction,
+  AdjustItemTransaction,
+} = require("../models/ItemTransaction");
+
+const ItemAssociation = require("../models/ItemAssociation");
+const Sublevel = require("../models/Sublevel");
+const { InventoryTypes, ReportItemForTypes } = require("../config/constants");
 
 module.exports = {
   /**
@@ -190,6 +202,262 @@ module.exports = {
         return;
       }
       res.send({ success: true, data: itemData });
+    } catch (error) {
+      next(error);
+    }
+  },
+  putItem: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { putQuantity, subLevel } = req.body;
+      if (!(putQuantity && putQuantity > 0) || !(subLevel && mongoose.isValidObjectId(subLevel))) {
+        res.status(400).send("Invalid value for putQuantity/subLevel");
+        return;
+      }
+
+      const subLevelObj = await Sublevel.findById(subLevel);
+      const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, sub_level_id: subLevelObj._id });
+      itemAssociation.totalQuantity = itemAssociation.totalQuantity + putQuantity;
+      itemAssociation.availableQuantity = itemAssociation.availableQuantity + putQuantity;
+      await itemAssociation.save();
+
+      await PutItemTransaction.create({
+        type: "PUT",
+        performedOn: item,
+        performedBy: res.locals.user,
+        putQuantity: putQuantity,
+        subLevel: subLevelObj,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  pickItem: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { pickupQuantity, subLevel } = req.body;
+      if (!(pickupQuantity && pickupQuantity > 0) || !(subLevel && mongoose.isValidObjectId(subLevel))) {
+        res.status(400).send("Invalid value for pickupQuantity/subLevel");
+        return;
+      }
+
+      const subLevelObj = await Sublevel.findById(subLevel);
+      const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, sub_level_id: subLevelObj._id });
+      itemAssociation.totalQuantity = itemAssociation.totalQuantity - pickupQuantity;
+      itemAssociation.availableQuantity = itemAssociation.availableQuantity - pickupQuantity;
+      await itemAssociation.save();
+
+      await PickItemTransaction.create({
+        type: "PICK",
+        performedOn: item,
+        performedBy: res.locals.user,
+        pickupQuantity: pickupQuantity,
+        subLevel: subLevelObj,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  reserveItem: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { reserveQuantity, job, pickupDate } = req.body;
+      if (!(reserveQuantity && reserveQuantity > 0) || !(job && mongoose.isValidObjectId(job)) || !(pickupDate && Date.parse(pickupDate))) {
+        res.status(400).send("Invalid value for reserveQuantity/job/pickupDate");
+        return;
+      }
+
+      const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, availableQuantity: { $gte: reserveQuantity } });
+      itemAssociation.reservedQuantity = itemAssociation.reservedQuantity + reserveQuantity;
+      itemAssociation.availableQuantity = itemAssociation.availableQuantity - reserveQuantity;
+      await itemAssociation.save();
+
+      await ReserveItemTransaction.create({
+        type: "RESERVE",
+        performedOn: item,
+        performedBy: res.locals.user,
+        reserveQuantity: reserveQuantity,
+        job: job,
+        pickupDate: Date.parse(pickupDate),
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  checkInItem: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { checkInMeterReading, hasIssue, issueDescription } = req.body;
+      if (!(checkInMeterReading && checkInMeterReading > 0)) {
+        res.status(400).send("Invalid value for checkInMeterReading");
+        return;
+      }
+
+      await CheckInItemTransaction.create({
+        type: "CHECK-IN",
+        performedOn: item,
+        performedBy: res.locals.user,
+        checkInMeterReading: checkInMeterReading,
+        hasIssue: hasIssue,
+        issueDescription: hasIssue ? issueDescription : "",
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  checkOutItem: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { checkOutMeterReading, job, usageReason } = req.body;
+      if (!(checkOutMeterReading && checkOutMeterReading > 0) || !(job && mongoose.isValidObjectId(job))) {
+        res.status(400).send("Invalid value for checkOutMeterReading/job");
+        return;
+      }
+
+      await CheckOutItemTransaction.create({
+        type: "CHECK-OUT",
+        performedOn: item,
+        performedBy: res.locals.user,
+        checkOutMeterReading: checkOutMeterReading,
+        job: job,
+        usageReason: usageReason ? usageReason : "",
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  reportItem: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { reportingFor, details } = req.body;
+      if (!(reportingFor && ReportItemForTypes.includes(reportingFor))) {
+        res.status(400).send("Invalid value for checkOutMeterReading/job");
+        return;
+      }
+
+      await ReportItemTransaction.create({
+        type: "REPORT",
+        performedOn: item,
+        performedBy: res.locals.user,
+        reportingFor: reportingFor,
+        details: details ? details : "",
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  adjustItem: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      if (!id || mongoose.isValidObjectId(id)) {
+        res.status(400).send("Missing/Invalid id param");
+        return;
+      }
+
+      const item = await Item.findById(id);
+      if (!item) {
+        res.status(404).send("item not found");
+        return;
+      }
+
+      const { recountedQuantity, damagedQuantity, subLevel } = req.body;
+      if (!(recountedQuantity && recountedQuantity > 0) || !(subLevel && mongoose.isValidObjectId(subLevel))) {
+        res.status(400).send("Invalid value for pickupQuantity/subLevel");
+        return;
+      }
+
+      const subLevelObj = await Sublevel.findById(subLevel);
+      const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, sub_level_id: subLevelObj._id });
+      const lastRecordedQuantity = itemAssociation.totalQuantity;
+      const varianceRecordedInQuantity = itemAssociation.totalQuantity - recountedQuantity;
+      const totalAdjustment = varianceRecordedInQuantity + damagedQuantity;
+      itemAssociation.totalQuantity = itemAssociation.totalQuantity - totalAdjustment;
+      itemAssociation.availableQuantity = itemAssociation.availableQuantity - totalAdjustment;
+      await itemAssociation.save();
+
+      await AdjustItemTransaction.create({
+        type: "ADJUST",
+        performedOn: item,
+        performedBy: res.locals.user,
+        lastRecordedQuantity,
+        recountedQuantity,
+        varianceRecordedInQuantity,
+        damagedQuantity,
+        totalAdjustment,
+        newAdjustedQuantity: itemAssociation.totalQuantity,
+      });
     } catch (error) {
       next(error);
     }

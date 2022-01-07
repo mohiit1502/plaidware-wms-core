@@ -59,6 +59,17 @@ const AUTHORIZATION_FAILURE_ERROR_MESSAGE =
 
 const SubLevelTypes = ["POSITION", "BIN", "PALLET"];
 
+const ItemTransactionTypes = [
+  "PUT",
+  "PICK",
+  "RESERVE",
+  "CHECK-IN",
+  "CHECK-OUT",
+  "RESERVE"
+];
+
+const ReportItemForTypes = ["LOCATION", "ISSUE", "INCIDENT"];
+
 module.exports = {
   UserActions,
   InventoryScopes,
@@ -75,4 +86,6 @@ module.exports = {
   AREA_ADMIN_ROLE: "area-admin",
   AUTHENTICATION_FAILURE_ERROR_MESSAGE,
   AUTHORIZATION_FAILURE_ERROR_MESSAGE,
+  ItemTransactionTypes,
+  ReportItemForTypes,
 };

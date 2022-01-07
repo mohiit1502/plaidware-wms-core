@@ -29,17 +29,36 @@ module.exports = {
    * Create a Inventory
    */
   createInventory: async (req, res, next) => {
-    const { name, type } = req.body;
+    const { name, type, policies } = req.body;
 
     if (!(name && type)) {
       res.status(400).send("Missing params param");
       return;
     }
+    const preferredLocations = [];
+    if (policies.preferredLocations && Array.isArray(policies.preferredLocations)) {
+      for (const preferredLocation of policies.preferredLocations) {
+        preferredLocations.push({ id: preferredLocation.id, type: preferredLocation.type });
+      }
+    }
+
+    const verifiedPolicies = {
+      orderTracking: policies.orderTracking || {},
+      alerting: {
+        lowestStockLevel: policies.alerting && policies.alerting.lowestStockLevel ? policies.alerting.lowestStockLevel : false,
+        highestStockLevel: policies.alerting && policies.alerting.highestStockLevel ? policies.alerting.highestStockLevel : false,
+        alertStockLevel: policies.alerting && policies.alerting.alertStockLevel ? policies.alerting.alertStockLevel : false,
+        reOrderLevel: policies.alerting && policies.alerting.reOrderLevel ? policies.alerting.reOrderLevel : false,
+      },
+      replenishment: policies.replenishment || {},
+      preferredLocations: preferredLocations,
+    };
 
     try {
       const inventoryData = new Inventory({
         name,
         type,
+        policies: verifiedPolicies,
       });
 
       await inventoryData.save();
@@ -64,7 +83,7 @@ module.exports = {
       return;
     }
 
-    const { name, type } = req.body;
+    const { name, type, policies } = req.body;
 
     if (!(name || type)) {
       res.status(400).send("Missing data in body");
@@ -80,6 +99,37 @@ module.exports = {
 
       if (name) inventoryData.name = name;
       if (type) inventoryData.type = type;
+
+      if (policies) {
+        const preferredLocations = [];
+        if (policies.preferredLocations && Array.isArray(policies.preferredLocations)) {
+          for (const preferredLocation of policies.preferredLocations) {
+            preferredLocations.push({ id: preferredLocation.id, type: preferredLocation.type });
+          }
+        }
+
+        inventoryData.policies = {
+          orderTracking: policies.orderTracking || inventoryData.policies.orderTracking,
+          alerting: {
+            lowestStockLevel:
+              policies.alerting && policies.alerting.lowestStockLevel
+                ? policies.alerting.lowestStockLevel
+                : inventoryData.policies.alerting.lowestStockLevel,
+            highestStockLevel:
+              policies.alerting && policies.alerting.highestStockLevel
+                ? policies.alerting.highestStockLevel
+                : inventoryData.policies.alerting.highestStockLevel,
+            alertStockLevel:
+              policies.alerting && policies.alerting.alertStockLevel
+                ? policies.alerting.alertStockLevel
+                : inventoryData.policies.alerting.alertStockLevel,
+            reOrderLevel:
+              policies.alerting && policies.alerting.reOrderLevel ? policies.alerting.reOrderLevel : inventoryData.policies.alerting.reOrderLevel,
+          },
+          replenishment: policies.replenishment || inventoryData.policies.replenishment,
+          preferredLocations: preferredLocations,
+        };
+      }
 
       await inventoryData.save();
       res.send({ success: true, data: inventoryData });
