@@ -194,4 +194,25 @@ module.exports = {
       next(error);
     }
   },
+  pickItem: async (req, res, next) => {
+    res.status(500).send({ success: false, error: "Not Implemented" });
+  },
+  putItem: async (req, res, next) => {
+    res.status(500).send({ success: false, error: "Not Implemented" });
+  },
+  reserveItem: async (req, res, next) => {
+    res.status(500).send({ success: false, error: "Not Implemented" });
+  },
+  checkInItem: async (req, res, next) => {
+    res.status(500).send({ success: false, error: "Not Implemented" });
+  },
+  checkOutItem: async (req, res, next) => {
+    res.status(500).send({ success: false, error: "Not Implemented" });
+  },
+  reportItem: async (req, res, next) => {
+    res.status(500).send({ success: false, error: "Not Implemented" });
+  },
+  adjustItem: async (req, res, next) => {
+    res.status(500).send({ success: false, error: "Not Implemented" });
+  },
 };
