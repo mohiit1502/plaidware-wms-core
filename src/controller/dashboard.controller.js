@@ -163,14 +163,34 @@ const createSublevels = async (subLevels, level, parent = undefined, depth = 0) 
   return sub_levels_list;
 };
 
-const createInventory = async ({ name, type }) => {
+const createInventory = async ({ name, type, policies }) => {
   if (!(name && type)) {
     return;
   }
 
+  const preferredLocations = [];
+  if (policies.preferredLocations && Array.isArray(policies.preferredLocations)) {
+    for (const preferredLocation of policies.preferredLocations) {
+      preferredLocations.push({ id: preferredLocation.id, type: preferredLocation.type });
+    }
+  }
+
+  const verifiedPolicies = {
+    orderTracking: policies.orderTracking || {},
+    alerting: {
+      lowestStockLevel: policies.alerting && policies.alerting.lowestStockLevel ? policies.alerting.lowestStockLevel : false,
+      highestStockLevel: policies.alerting && policies.alerting.highestStockLevel ? policies.alerting.highestStockLevel : false,
+      alertStockLevel: policies.alerting && policies.alerting.alertStockLevel ? policies.alerting.alertStockLevel : false,
+      reOrderLevel: policies.alerting && policies.alerting.reOrderLevel ? policies.alerting.reOrderLevel : false,
+    },
+    replenishment: policies.replenishment || {},
+    preferredLocations: preferredLocations,
+  };
+
   return await Inventory.create({
     name,
     type,
+    policies: verifiedPolicies,
   });
 };
 
