@@ -68,6 +68,8 @@ const ItemTransactionTypes = [
   "RESERVE"
 ];
 
+const ReportItemForTypes = ["LOCATION", "ISSUE", "INCIDENT"];
+
 module.exports = {
   UserActions,
   InventoryScopes,
@@ -85,4 +87,5 @@ module.exports = {
   AUTHENTICATION_FAILURE_ERROR_MESSAGE,
   AUTHORIZATION_FAILURE_ERROR_MESSAGE,
   ItemTransactionTypes,
+  ReportItemForTypes,
 };
