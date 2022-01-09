@@ -6,6 +6,7 @@ const User = require("./../models/User");
 const { JWT_SECRET, JWT_REFRESH_EXPIRY_TIME, JWT_ACCESS_EXPIRY_TIME } = require("./../config/env");
 const UserRole = require("../models/UserRole");
 const UserPermission = require("../models/UserPermission");
+const { AllUIModules } = require("../config/constants");
 
 const createAccessToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, {
@@ -122,5 +123,31 @@ module.exports = {
       { returnDocument: "after" }
     );
     res.send({ success: true, data: response });
+  },
+
+  getUIAccessControl: async (req, res, next) => {
+    try {
+      const user = res.locals.user;
+
+      const userUIPermissions = [];
+
+      for (const role of user.roles) {
+        for (const permission of role.permissions) {
+          if (AllUIModules.includes(permission.name) && !userUIPermissions.includes(permission.name)) {
+            userUIPermissions.push(permission.name);
+          }
+        }
+      }
+
+      for (const permission of user.permissions) {
+        if (AllUIModules.includes(permission.name) && !userUIPermissions.includes(permission.name)) {
+          userUIPermissions.push(permission.name);
+        }
+      }
+
+      res.send({ success: true, data: userUIPermissions });
+    } catch (error) {
+      next(error);
+    }
   },
 };

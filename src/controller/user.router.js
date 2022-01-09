@@ -6,5 +6,6 @@ router.post("/register", controller.registerUser);
 router.post("/login", controller.loginUser);
 router.post("/:user/add-access", AuthenticateMiddleware, SuperAdminCheck, controller.addUserAccessControl);
 router.post("/:user/remove-access", AuthenticateMiddleware, SuperAdminCheck, controller.removeUserAccessControl);
+router.get("/allowed-ui-modules", AuthenticateMiddleware, controller.getUIAccessControl);
 
 module.exports = router;
