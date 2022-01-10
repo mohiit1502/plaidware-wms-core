@@ -48,6 +48,10 @@ const schema = new mongoose.Schema(
         ref: "UserPermission",
       },
     ],
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    }
   },
   {
     timestamps: true,
