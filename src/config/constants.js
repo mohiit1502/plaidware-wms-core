@@ -65,10 +65,28 @@ const ItemTransactionTypes = [
   "RESERVE",
   "CHECK-IN",
   "CHECK-OUT",
-  "RESERVE"
+  "REPORT",
+  "ADJUST",
 ];
 
 const ReportItemForTypes = ["LOCATION", "ISSUE", "INCIDENT"];
+
+const AllUIModules = [
+  "Home::Explore Inventory",
+  "Home::Scan",
+  "Home::Receiving",
+  "Home::Shipping",
+  "Setup::Warehouse design",
+  "Setup::Inventory Definition",
+  "Setup::User & Access",
+  "Setup::Labelling",
+  "Report::Warehouse design",
+  "Report::Inventory Definition",
+  "Report::User & Access",
+  "Report::Labelling",
+  "Messages",
+  "Settings",
+];
 
 module.exports = {
   UserActions,
@@ -88,4 +106,5 @@ module.exports = {
   AUTHORIZATION_FAILURE_ERROR_MESSAGE,
   ItemTransactionTypes,
   ReportItemForTypes,
+  AllUIModules,
 };

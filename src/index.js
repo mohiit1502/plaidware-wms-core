@@ -4,26 +4,18 @@ const helmet = require("helmet");
 const cors = require("cors");
 const morgan = require("morgan");
 
-const mongoose = require("mongoose");
+
 const { router } = require("./controller");
 const {
   API_PORT,
-  MONGODB_URI,
 } = require("./config/env");
+
+const db = require("./config/db/connect");
 
 (async () => {
   console.log("Connecting to MongoDB ...");
-  await mongoose
-    .connect(MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    })
-    .then(() => {
-      console.log("Connected to MongoDB at: ", MONGODB_URI);
-    })
-    .catch(console.error);
 
-  mongoose.set("debug", true);
+  await db.connect();
 
   const app = express();
 

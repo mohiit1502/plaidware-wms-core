@@ -1,9 +1,5 @@
 const mongoose = require("mongoose");
-const {
-  UserActions,
-  WarehouseScopes,
-  InventoryScopes,
-} = require("./../config/constants");
+const { UserActions, WarehouseScopes, InventoryScopes, AllUIModules } = require("./../config/constants");
 
 const schema = new mongoose.Schema(
   {
@@ -35,6 +31,12 @@ const schema = new mongoose.Schema(
           type: String,
           enum: WarehouseScopes,
         },
+      },
+    ],
+    allowedUIModules: [
+      {
+        type: String,
+        enum: AllUIModules,
       },
     ],
     actions: [
