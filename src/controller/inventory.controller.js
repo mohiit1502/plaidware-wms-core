@@ -36,7 +36,7 @@ module.exports = {
       return;
     }
     const preferredLocations = [];
-    if (policies.preferredLocations && Array.isArray(policies.preferredLocations)) {
+    if (policies && policies.preferredLocations && Array.isArray(policies.preferredLocations)) {
       for (const preferredLocation of policies.preferredLocations) {
         preferredLocations.push({ id: preferredLocation.id, type: preferredLocation.type });
       }
@@ -112,19 +112,21 @@ module.exports = {
           orderTracking: policies.orderTracking || inventoryData.policies.orderTracking,
           alerting: {
             lowestStockLevel:
-              policies.alerting && policies.alerting.lowestStockLevel
+              policies.alerting && policies.alerting.lowestStockLevel !== undefined
                 ? policies.alerting.lowestStockLevel
                 : inventoryData.policies.alerting.lowestStockLevel,
             highestStockLevel:
-              policies.alerting && policies.alerting.highestStockLevel
+              policies.alerting && policies.alerting.highestStockLevel !== undefined
                 ? policies.alerting.highestStockLevel
                 : inventoryData.policies.alerting.highestStockLevel,
             alertStockLevel:
-              policies.alerting && policies.alerting.alertStockLevel
+              policies.alerting && policies.alerting.alertStockLevel !== undefined
                 ? policies.alerting.alertStockLevel
                 : inventoryData.policies.alerting.alertStockLevel,
             reOrderLevel:
-              policies.alerting && policies.alerting.reOrderLevel ? policies.alerting.reOrderLevel : inventoryData.policies.alerting.reOrderLevel,
+              policies.alerting && policies.alerting.reOrderLevel !== undefined
+                ? policies.alerting.reOrderLevel
+                : inventoryData.policies.alerting.reOrderLevel,
           },
           replenishment: policies.replenishment || inventoryData.policies.replenishment,
           preferredLocations: preferredLocations,

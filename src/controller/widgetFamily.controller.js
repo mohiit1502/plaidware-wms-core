@@ -17,7 +17,7 @@ module.exports = {
     try {
       const widgetFamilyData = await WidgetFamily.findById(id);
       if (!widgetFamilyData) {
-        res.status(404);
+        res.status(404).send({ success: false, error: "Widget not found" });
         return;
       }
       res.send({ success: true, data: widgetFamilyData });

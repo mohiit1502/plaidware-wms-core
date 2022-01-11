@@ -209,7 +209,7 @@ module.exports = {
   putItem: async (req, res, next) => {
     try {
       const { id } = req.params;
-      if (!id || mongoose.isValidObjectId(id)) {
+      if (!id || !mongoose.isValidObjectId(id)) {
         res.status(400).send("Missing/Invalid id param");
         return;
       }
@@ -227,18 +227,23 @@ module.exports = {
       }
 
       const subLevelObj = await Sublevel.findById(subLevel);
-      const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, sub_level_id: subLevelObj._id });
+      let itemAssociation = await ItemAssociation.findOne({ item_id: item._id, sub_level_id: subLevelObj._id });
+      if (!itemAssociation) {
+        itemAssociation = await ItemAssociation.create({ item_id: item._id, sub_level_id: subLevelObj._id });
+      }
       itemAssociation.totalQuantity = itemAssociation.totalQuantity + putQuantity;
       itemAssociation.availableQuantity = itemAssociation.availableQuantity + putQuantity;
       await itemAssociation.save();
 
-      await PutItemTransaction.create({
+      const itemTransaction = await PutItemTransaction.create({
         type: "PUT",
         performedOn: item,
         performedBy: res.locals.user,
         putQuantity: putQuantity,
         subLevel: subLevelObj,
       });
+      res.send({ success: true, data: { itemAssociation, itemTransaction } });
+      res.send({ success: true, data: { itemAssociation, itemTransaction } });
     } catch (error) {
       next(error);
     }
@@ -247,7 +252,7 @@ module.exports = {
   pickItem: async (req, res, next) => {
     try {
       const { id } = req.params;
-      if (!id || mongoose.isValidObjectId(id)) {
+      if (!id || !mongoose.isValidObjectId(id)) {
         res.status(400).send("Missing/Invalid id param");
         return;
       }
@@ -265,18 +270,22 @@ module.exports = {
       }
 
       const subLevelObj = await Sublevel.findById(subLevel);
-      const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, sub_level_id: subLevelObj._id });
+      let itemAssociation = await ItemAssociation.findOne({ item_id: item._id, sub_level_id: subLevelObj._id });
+      if (!itemAssociation) {
+        itemAssociation = await ItemAssociation.create({ item_id: item._id, sub_level_id: subLevelObj._id });
+      }
       itemAssociation.totalQuantity = itemAssociation.totalQuantity - pickupQuantity;
       itemAssociation.availableQuantity = itemAssociation.availableQuantity - pickupQuantity;
       await itemAssociation.save();
 
-      await PickItemTransaction.create({
+      const itemTransaction = await PickItemTransaction.create({
         type: "PICK",
         performedOn: item,
         performedBy: res.locals.user,
         pickupQuantity: pickupQuantity,
         subLevel: subLevelObj,
       });
+      res.send({ success: true, data: { itemAssociation, itemTransaction } });
     } catch (error) {
       next(error);
     }
@@ -285,7 +294,7 @@ module.exports = {
   reserveItem: async (req, res, next) => {
     try {
       const { id } = req.params;
-      if (!id || mongoose.isValidObjectId(id)) {
+      if (!id || !mongoose.isValidObjectId(id)) {
         res.status(400).send("Missing/Invalid id param");
         return;
       }
@@ -303,11 +312,15 @@ module.exports = {
       }
 
       const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, availableQuantity: { $gte: reserveQuantity } });
+      if (!itemAssociation) {
+        res.status(500).send("Quantity unavailable");
+        return;
+      }
       itemAssociation.reservedQuantity = itemAssociation.reservedQuantity + reserveQuantity;
       itemAssociation.availableQuantity = itemAssociation.availableQuantity - reserveQuantity;
       await itemAssociation.save();
 
-      await ReserveItemTransaction.create({
+      const itemTransaction = await ReserveItemTransaction.create({
         type: "RESERVE",
         performedOn: item,
         performedBy: res.locals.user,
@@ -315,6 +328,7 @@ module.exports = {
         job: job,
         pickupDate: Date.parse(pickupDate),
       });
+      res.send({ success: true, data: { itemAssociation, itemTransaction } });
     } catch (error) {
       next(error);
     }
@@ -323,7 +337,7 @@ module.exports = {
   checkInItem: async (req, res, next) => {
     try {
       const { id } = req.params;
-      if (!id || mongoose.isValidObjectId(id)) {
+      if (!id || !mongoose.isValidObjectId(id)) {
         res.status(400).send("Missing/Invalid id param");
         return;
       }
@@ -340,7 +354,7 @@ module.exports = {
         return;
       }
 
-      await CheckInItemTransaction.create({
+      const itemTransaction = await CheckInItemTransaction.create({
         type: "CHECK-IN",
         performedOn: item,
         performedBy: res.locals.user,
@@ -348,6 +362,7 @@ module.exports = {
         hasIssue: hasIssue,
         issueDescription: hasIssue ? issueDescription : "",
       });
+      res.send({ success: true, data: { itemTransaction } });
     } catch (error) {
       next(error);
     }
@@ -356,7 +371,7 @@ module.exports = {
   checkOutItem: async (req, res, next) => {
     try {
       const { id } = req.params;
-      if (!id || mongoose.isValidObjectId(id)) {
+      if (!id || !mongoose.isValidObjectId(id)) {
         res.status(400).send("Missing/Invalid id param");
         return;
       }
@@ -373,7 +388,7 @@ module.exports = {
         return;
       }
 
-      await CheckOutItemTransaction.create({
+      const itemTransaction = await CheckOutItemTransaction.create({
         type: "CHECK-OUT",
         performedOn: item,
         performedBy: res.locals.user,
@@ -381,6 +396,7 @@ module.exports = {
         job: job,
         usageReason: usageReason ? usageReason : "",
       });
+      res.send({ success: true, data: { itemTransaction } });
     } catch (error) {
       next(error);
     }
@@ -389,7 +405,7 @@ module.exports = {
   reportItem: async (req, res, next) => {
     try {
       const { id } = req.params;
-      if (!id || mongoose.isValidObjectId(id)) {
+      if (!id || !mongoose.isValidObjectId(id)) {
         res.status(400).send("Missing/Invalid id param");
         return;
       }
@@ -406,13 +422,14 @@ module.exports = {
         return;
       }
 
-      await ReportItemTransaction.create({
+      const itemTransaction = await ReportItemTransaction.create({
         type: "REPORT",
         performedOn: item,
         performedBy: res.locals.user,
         reportingFor: reportingFor,
         details: details ? details : "",
       });
+      res.send({ success: true, data: { itemTransaction } });
     } catch (error) {
       next(error);
     }
@@ -421,7 +438,7 @@ module.exports = {
   adjustItem: async (req, res, next) => {
     try {
       const { id } = req.params;
-      if (!id || mongoose.isValidObjectId(id)) {
+      if (!id || !mongoose.isValidObjectId(id)) {
         res.status(400).send("Missing/Invalid id param");
         return;
       }
@@ -447,7 +464,7 @@ module.exports = {
       itemAssociation.availableQuantity = itemAssociation.availableQuantity - totalAdjustment;
       await itemAssociation.save();
 
-      await AdjustItemTransaction.create({
+      const itemTransaction = await AdjustItemTransaction.create({
         type: "ADJUST",
         performedOn: item,
         performedBy: res.locals.user,
@@ -458,6 +475,7 @@ module.exports = {
         totalAdjustment,
         newAdjustedQuantity: itemAssociation.totalQuantity,
       });
+      res.send({ success: true, data: { itemAssociation, itemTransaction } });
     } catch (error) {
       next(error);
     }
