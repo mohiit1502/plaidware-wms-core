@@ -35,7 +35,7 @@ module.exports = {
 
     const result = await UserPermission.find(
       {},
-      { id: 1, name: 1, inventoryScopes: 1, warehouseScopes: 1, actions: 1 },
+      { id: 1, name: 1, inventoryScopes: 1, warehouseScopes: 1, actions: 1, allowedUIModules: 1 },
       { skip: page * perPage, limit: perPage }
     );
     res.send({ success: true, data: result });

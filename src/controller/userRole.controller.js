@@ -6,7 +6,7 @@ const getValidPermissions = async (permissions) => {
   const verifiedPermissions = permissions.filter((permission) => mongoose.isValidObjectId(permission));
   if (verifiedPermissions.length === 0) return [];
   const permissionObjects = await UserPermission.find({
-    id: { $in: verifiedPermissions },
+    _id: { $in: verifiedPermissions },
   }).select({ _id: 1 });
   return permissionObjects.map((_) => _._id);
 };

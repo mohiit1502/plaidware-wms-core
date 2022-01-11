@@ -173,6 +173,7 @@ module.exports = {
     const { id } = req.params;
     if (!mongoose.isValidObjectId(id)) {
       res.status(400).send({ success: false, error: "Invalid data for user ID" });
+      return;
     }
 
     try {
@@ -209,13 +210,15 @@ module.exports = {
     const { id } = req.params;
     if (!mongoose.isValidObjectId(id)) {
       res.status(400).send({ success: false, error: "Invalid data for user ID" });
+      return;
     }
 
     const { email, fullName, password } = req.body;
     try {
       const user = await User.findById(id);
-      if (user) {
+      if (!user) {
         res.status(404).send({ success: false, error: "User not found" });
+        return;
       }
       const salt = await bcrypt.genSalt();
 
