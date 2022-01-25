@@ -142,15 +142,24 @@ module.exports = {
    * Gets the Items data by filter
    */
   getItemsByFilter: async (req, res, next) => {
-    let { family, type, page, perPage } = req.query;
+    let { family, type, inventory, page, perPage } = req.query;
     page = page ? parseInt(page) : 0;
     perPage = perPage ? parseInt(perPage) : 10;
+    const inventoryFilters = {};
     let inventories;
     let widgetFamilies;
     let itemFilters;
     try {
       if (type && InventoryTypes.includes(type)) {
-        inventories = await Inventory.find({ type });
+        inventoryFilters["type"] = type;
+      }
+
+      if (inventory) {
+        inventoryFilters["_id"] = inventory;
+      }
+
+      if (Object.keys(inventoryFilters).length > 0) {
+        inventories = await Inventory.find(inventoryFilters);
       }
 
       const widgetFamilyFilters = [];
