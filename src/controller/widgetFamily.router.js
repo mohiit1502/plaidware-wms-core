@@ -21,4 +21,9 @@ router.get("/search-by-inventory", controller.getWidgetFamilyByInventory);
  */
 router.get("/:id", controller.getWidgetFamilyByID);
 
+/**
+ * @route /widgetFamily/:id/children
+ */
+router.get("/:id/children", controller.getWidgetFamilyChildrenByID);
+
 module.exports = router;

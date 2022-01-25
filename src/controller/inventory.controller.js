@@ -1,4 +1,5 @@
 const Inventory = require("../models/Inventory");
+const WidgetFamily = require("../models/WidgetFamily");
 const { InventoryTypes } = require("../config/constants");
 
 module.exports = {
@@ -162,6 +163,11 @@ module.exports = {
         res.status(404);
         return;
       }
+
+      for (const inventory of inventoryData) {
+        inventory["widgetFamilies"] = await WidgetFamily.find({ inventory: inventory._id });
+      }
+
       res.send({ success: true, data: inventoryData });
     } catch (error) {
       next(error);
