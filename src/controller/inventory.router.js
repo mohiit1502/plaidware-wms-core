@@ -12,6 +12,11 @@ router.post("/", controller.createInventory);
 router.patch("/:id", controller.updateInventoryByID);
 
 /**
+ * @route /inventory/types
+ */
+router.get("/types", controller.getInventoryTypes);
+
+/**
  * @route /inventory/filter-by-type
  */
 router.get("/filter-by-type", controller.getInventoryByType);

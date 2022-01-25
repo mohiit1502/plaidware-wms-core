@@ -4,6 +4,13 @@ const { InventoryTypes } = require("../config/constants");
 
 module.exports = {
   /**
+   * Gets the Inventory types
+   */
+  getInventoryTypes: async (req, res, next) => {
+    res.send({ success: true, data: InventoryTypes });
+  },
+
+  /**
    * Gets the Inventory data by `id`
    */
   getInventoryByID: async (req, res, next) => {
