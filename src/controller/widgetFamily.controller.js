@@ -27,6 +27,29 @@ module.exports = {
   },
 
   /**
+   * Gets the WidgetFamily children data by `id`
+   */
+  getWidgetFamilyChildrenByID: async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).send("Missing id param");
+      return;
+    }
+
+    try {
+      const widgetFamilyData = await WidgetFamily.find({ parent: id });
+      if (!widgetFamilyData) {
+        res.status(404).send({ success: false, error: "Widget not found" });
+        return;
+      }
+      res.send({ success: true, data: widgetFamilyData });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
    * Create a WidgetFamily
    */
   createWidgetFamily: async (req, res, next) => {
