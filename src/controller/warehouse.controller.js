@@ -17,17 +17,17 @@ module.exports = {
     const { id } = req.params;
 
     if (!id) {
-      res.status(400).send("Missing id param");
+      res.status(400).send({ success: false, message: "Missing id param" });
       return;
     }
 
     try {
       const warehouseData = await Warehouse.findById(id);
       if (!warehouseData) {
-        res.status(404);
+        res.status(404).send({ success: false, message: "not found" });
         return;
       }
-      res.send(warehouseData);
+      res.send({ success: true, data: warehouseData });
     } catch (error) {
       next(error);
     }
@@ -54,10 +54,10 @@ module.exports = {
 
       await warehouseData.save();
       if (!warehouseData) {
-        res.status(404);
+        res.status(404).send({ success: false, message: "not found" });
         return;
       }
-      res.send(warehouseData);
+      res.send({ success: true, message: warehouseData });
     } catch (error) {
       next(error);
     }
@@ -92,21 +92,21 @@ module.exports = {
     const { id } = req.params;
 
     if (!id) {
-      res.status(400).send("Missing id param");
+      res.status(400).send({ success: false, message: "Missing ID param" });
       return;
     }
 
     const { name, address, specs, company_id } = req.body;
 
     if (!(name || address || specs || company_id)) {
-      res.status(400).send("Missing data in body");
+      res.status(400).send({ success: false, message: "Missing data in body" });
       return;
     }
 
     try {
       const warehouseData = await Warehouse.findById(id);
       if (!warehouseData) {
-        res.status(404);
+        res.status(404).send({ success: false, message: "not found" });
         return;
       }
 
@@ -116,7 +116,7 @@ module.exports = {
       if (company_id) warehouseData.company_id = mongoose.Types.ObjectId(company_id);
 
       await warehouseData.save();
-      res.send(warehouseData);
+      res.send({ success: true, data: warehouseData });
     } catch (error) {
       next(error);
     }

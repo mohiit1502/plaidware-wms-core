@@ -20,11 +20,7 @@ router.post("/", controller.createWarehouse);
 /**
  * @route /warehouse/add-image
  */
-router.post(
-  "/add-image/:id",
-  upload.single("warehouse-image"),
-  controller.addWarehouseImage
-);
+router.post("/add-image/:id", upload.single("warehouse-image"), controller.addWarehouseImage);
 
 /**
  * @route /warehouse/
