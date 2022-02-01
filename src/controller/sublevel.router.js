@@ -1,6 +1,12 @@
 const router = require("express").Router();
 const controller = require("./sublevel.controller");
 
+
+/**
+ * @route /sublevel/
+ */
+router.get("/all", controller.getAllSublevel);
+
 /**
  * @route /sublevel/:id
  */

@@ -1,6 +1,12 @@
 const router = require("express").Router();
 const controller = require("./row.controller");
 
+
+/**
+ * @route /row/
+ */
+router.get("/all", controller.getAllRow);
+
 /**
  * @route /row/:id
  */

@@ -3,6 +3,11 @@ const upload = require("../middleware/fileUpload");
 const controller = require("./warehouse.controller");
 
 /**
+ * @route /warehouse/
+ */
+router.get("/all", controller.getAllWarehouse);
+
+/**
  * @route /warehouse/get-all
  */
 router.get("/get-all", controller.getAllWarehouses);

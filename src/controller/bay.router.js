@@ -1,6 +1,12 @@
 const router = require("express").Router();
 const controller = require("./bay.controller");
 
+
+/**
+ * @route /bay/
+ */
+router.get("/all", controller.getAllBay);
+
 /**
  * @route /bay/:id
  */
