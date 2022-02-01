@@ -3,6 +3,11 @@ const upload = require("../middleware/fileUpload");
 const controller = require("./warehouse.controller");
 
 /**
+ * @route /warehouse/get-all
+ */
+router.get("/get-all", controller.getAllWarehouses);
+
+/**
  * @route /warehouse/:id
  */
 router.get("/:id", controller.getWarehouseByID);
@@ -15,11 +20,7 @@ router.post("/", controller.createWarehouse);
 /**
  * @route /warehouse/add-image
  */
-router.post(
-  "/add-image/:id",
-  upload.single("warehouse-image"),
-  controller.addWarehouseImage
-);
+router.post("/add-image/:id", upload.single("warehouse-image"), controller.addWarehouseImage);
 
 /**
  * @route /warehouse/
