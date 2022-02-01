@@ -1,6 +1,12 @@
 const router = require("express").Router();
 const controller = require("./zone.controller");
 
+
+/**
+ * @route /zone/
+ */
+router.get("/all", controller.getAllZone);
+
 /**
  * @route /zone/:id
  */

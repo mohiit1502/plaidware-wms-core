@@ -91,4 +91,15 @@ module.exports = {
       next(error);
     }
   },
+
+  getAllArea: async (req, res, next) => {
+    try {
+      const { getAllWithPagination } = require("./utils/pagination");
+      const { page, perPage } = req.query;
+      const data = await getAllWithPagination(Area, page, perPage);
+      res.send({ success: true, data: data });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
