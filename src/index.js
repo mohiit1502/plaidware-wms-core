@@ -13,8 +13,6 @@ const {
 const db = require("./config/db/connect");
 
 (async () => {
-  console.log("Connecting to MongoDB ...");
-
   await db.connect();
 
   const app = express();
