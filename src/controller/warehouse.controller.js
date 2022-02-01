@@ -2,6 +2,14 @@ const Warehouse = require("../models/Warehouse");
 const mongoose = require("mongoose");
 
 module.exports = {
+  getAllWarehouses: async (req, res, next) => {
+    try {
+      const warehouses = await Warehouse.find();
+      res.send({ success: true, data: warehouses });
+    } catch (error) {
+      next(error);
+    }
+  },
   /**
    * Gets the warehouse data by `id`
    */
