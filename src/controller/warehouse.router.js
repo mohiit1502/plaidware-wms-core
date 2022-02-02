@@ -8,11 +8,6 @@ const controller = require("./warehouse.controller");
 router.get("/all", controller.getAllWarehouse);
 
 /**
- * @route /warehouse/get-all
- */
-router.get("/get-all", controller.getAllWarehouses);
-
-/**
  * @route /warehouse/:id
  */
 router.get("/:id", controller.getWarehouseByID);
