@@ -124,4 +124,24 @@ module.exports = {
       next(error);
     }
   },
+
+  getWarehouseZonesByID: async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).send({ success: false, message: "Missing id param" });
+      return;
+    }
+
+    try {
+      const warehouseData = await Warehouse.findById(id).populate("zones");
+      if (!warehouseData) {
+        res.status(404).send({ success: false, message: "not found" });
+        return;
+      }
+      res.send({ success: true, data: warehouseData.zones });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
