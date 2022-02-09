@@ -13,6 +13,11 @@ router.get("/all", controller.getAllWarehouse);
 router.get("/:id", controller.getWarehouseByID);
 
 /**
+ * @route /warehouse/:id/zones
+ */
+router.get("/:id/zones", controller.getWarehouseZonesByID);
+
+/**
  * @route /warehouse/
  */
 router.post("/", controller.createWarehouse);

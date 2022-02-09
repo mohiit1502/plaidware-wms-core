@@ -102,4 +102,24 @@ module.exports = {
       next(error);
     }
   },
+
+  getLevelSublevelsByID: async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).send({ success: false, message: "Missing id param" });
+      return;
+    }
+
+    try {
+      const levelData = await Level.findById(id).populate({ path: "sub_levels", populate: { path: "sub_level_id" } });
+      if (!levelData) {
+        res.status(404).send({ success: false, message: "not found" });
+        return;
+      }
+      res.send({ success: true, data: levelData.sub_levels });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

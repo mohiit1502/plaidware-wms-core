@@ -13,6 +13,11 @@ router.get("/all", controller.getAllRow);
 router.get("/:id", controller.getRowByID);
 
 /**
+ * @route /row/:id/bays
+ */
+router.get("/:id/bays", controller.getRowBaysByID);
+
+/**
  * @route /row/
  */
 router.post("/", controller.createRow);
