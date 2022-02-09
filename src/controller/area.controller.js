@@ -102,4 +102,24 @@ module.exports = {
       next(error);
     }
   },
+
+  getAreaRowsByID: async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).send({ success: false, message: "Missing id param" });
+      return;
+    }
+
+    try {
+      const areaData = await Area.findById(id).populate("rows");
+      if (!areaData) {
+        res.status(404).send({ success: false, message: "not found" });
+        return;
+      }
+      res.send({ success: true, data: areaData.rows });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

@@ -102,4 +102,24 @@ module.exports = {
       next(error);
     }
   },
+
+  getRowBaysByID: async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).send({ success: false, message: "Missing id param" });
+      return;
+    }
+
+    try {
+      const rowData = await Row.findById(id).populate("bays");
+      if (!rowData) {
+        res.status(404).send({ success: false, message: "not found" });
+        return;
+      }
+      res.send({ success: true, data: rowData.bays });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

@@ -12,6 +12,11 @@ router.get("/all", controller.getAllArea);
 router.get("/:id", controller.getAreaByID);
 
 /**
+ * @route /area/:id/rows
+ */
+router.get("/:id/rows", controller.getAreaRowsByID);
+
+/**
  * @route /area/
  */
 router.post("/", controller.createArea);

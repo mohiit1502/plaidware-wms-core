@@ -13,6 +13,11 @@ router.get("/all", controller.getAllZone);
 router.get("/:id", controller.getZoneByID);
 
 /**
+ * @route /zone/:id/areas
+ */
+router.get("/:id/areas", controller.getZoneAreasByID);
+
+/**
  * @route /zone/
  */
 router.post("/", controller.createZone);
