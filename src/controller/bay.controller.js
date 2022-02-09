@@ -104,4 +104,24 @@ module.exports = {
       next(error);
     }
   },
+
+  getBayLevelsByID: async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).send({ success: false, message: "Missing id param" });
+      return;
+    }
+
+    try {
+      const bayData = await Bay.findById(id).populate("levels");
+      if (!bayData) {
+        res.status(404).send({ success: false, message: "not found" });
+        return;
+      }
+      res.send({ success: true, data: bayData.levels });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

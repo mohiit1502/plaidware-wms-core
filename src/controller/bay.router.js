@@ -13,6 +13,11 @@ router.get("/all", controller.getAllBay);
 router.get("/:id", controller.getBayByID);
 
 /**
+ * @route /bay/:id/levels
+ */
+router.get("/:id/levels", controller.getBayLevelsByID);
+
+/**
  * @route /bay/
  */
 router.post("/", controller.createBay);

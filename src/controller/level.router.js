@@ -13,6 +13,11 @@ router.get("/all", controller.getAllLevel);
 router.get("/:id", controller.getLevelByID);
 
 /**
+ * @route /level/:id/sublevels
+ */
+router.get("/:id/sublevels", controller.getLevelSublevelsByID);
+
+/**
  * @route /level/
  */
 router.post("/", controller.createLevel);
