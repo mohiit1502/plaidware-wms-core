@@ -43,6 +43,7 @@ module.exports = {
         throw new Error("Not Authenticated user!");
       }
     } catch (error) {
+      console.error(error.message);
       res.status(401).send({
         success: false,
         error: constants.AUTHENTICATION_FAILURE_ERROR_MESSAGE,
