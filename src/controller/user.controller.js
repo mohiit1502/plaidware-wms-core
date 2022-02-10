@@ -33,14 +33,22 @@ const getValidIds = async (ids, model) => {
 
 module.exports = {
   registerUser: async (req, res, next) => {
-    const { email, fullName, password } = req.body;
+    const { email, fullName, password, createdBy } = req.body;
     try {
+      let createdByUser;
+      if (createdBy && mongoose.isValidObjectId(createdBy)) {
+        createdByUser = await User.findById(createdBy);
+      }
       const salt = await bcrypt.genSalt();
       const newUser = {
         email: email,
         fullName: fullName,
         password: await bcrypt.hash(password, salt),
       };
+
+      if (createdByUser) {
+        newUser["createdBy"] = createdByUser;
+      }
 
       const user = await User.create(newUser);
       console.log({ msg: "new user created", user });
@@ -156,11 +164,9 @@ module.exports = {
       page = page ? parseInt(page) : 0;
       perPage = perPage ? parseInt(perPage) : 10;
 
-      const result = await User.find(
-        {},
-        { id: 1, fullName: 1, email: 1, roles: 1, permissions: 1, createdBy: 1 },
-        { skip: page * perPage, limit: perPage }
-      )
+      const result = await User.find()
+        .skip(page * perPage)
+        .limit(perPage)
         .populate({ path: "roles", populate: "permissions" })
         .populate("permissions")
         .populate("createdBy");
