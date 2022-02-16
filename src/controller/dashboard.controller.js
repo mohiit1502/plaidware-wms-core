@@ -251,6 +251,27 @@ const createWidgetFamilies = async (widgetFamilies, inventory, parent = undefine
   return widgetFamiliesData;
 };
 
+const getChildModel = (parentType) => {
+  switch (parentType) {
+    case "warehouse":
+      return Zone;
+    case "zone":
+      return Area;
+    case "area":
+      return Row;
+    case "row":
+      return Bay;
+    case "bay":
+      return Level;
+    case "level":
+      return Sublevel;
+    case "sublevel":
+      return Sublevel;
+    default:
+      throw new Error("Invalid model type");
+  }
+};
+
 module.exports = {
   createWarehouseSchema: async (req, res, next) => {
     try {
@@ -326,6 +347,20 @@ module.exports = {
       }
 
       res.send({ success: true, data: inventorySchema });
+    } catch (error) {
+      next(error);
+    }
+  },
+  getChildrenFromParent: async (req, res, next) => {
+    try {
+      const { id, type } = req.body;
+      if (!id || !type) return res.send({ success: false, message: "Missing id or type" });
+
+      const query = {};
+      query[`${type}_id`] = id;
+
+      const childrenData = await getChildModel(type).find(query);
+      res.send({ success: true, data: { parent: { id, type }, childrenData } });
     } catch (error) {
       next(error);
     }
