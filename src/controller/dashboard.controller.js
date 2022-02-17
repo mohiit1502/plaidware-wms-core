@@ -356,7 +356,18 @@ module.exports = {
       const { id, type } = req.body;
       if (!id || !type) return res.send({ success: false, message: "Missing id or type" });
 
-      const query = {};
+      let query = {};
+
+      switch (type) {
+        case "level":
+        case "sublevel":
+          query = { $or: [{ main_level_id: id, parent_sublevel_id: id }] };
+          break;
+
+        default:
+          query[`${type}_id`] = id;
+          break;
+      }
       query[`${type}_id`] = id;
 
       const childrenData = await getChildModel(type).find(query);
