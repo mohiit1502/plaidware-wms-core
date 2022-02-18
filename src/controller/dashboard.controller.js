@@ -370,7 +370,14 @@ module.exports = {
       }
       query[`${type}_id`] = id;
 
-      const childrenData = await getChildModel(type).find(query);
+      let childrenData = await getChildModel(type).find(query);
+
+      // populate locations to sublevel
+      if (childrenData && ["level", "sublevel"].includes(type)) {
+        const parentData = type === "level" ? await Level.findById(id) : await Sublevel.findById(id);
+        childrenData = parentData && childrenData.map((t1) => ({ ...t1, ...parentData.sub_levels.find((t2) => t2.sub_level_id === t1._id) }));
+      }
+
       res.send({ success: true, data: { parent: { id, type }, childrenData } });
     } catch (error) {
       next(error);
