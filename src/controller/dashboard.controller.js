@@ -375,7 +375,8 @@ module.exports = {
       // populate locations to sublevel
       if (childrenData && ["level", "sublevel"].includes(type)) {
         const parentData = type === "level" ? await Level.findById(id) : await Sublevel.findById(id);
-        childrenData = parentData && childrenData.map((t1) => ({ ...t1, ...parentData.sub_levels.find((t2) => t2.sub_level_id === t1._id) }));
+        childrenData =
+          parentData && childrenData.map((t1) => ({ ...t1, positions: parentData.sub_levels?.find((t2) => t2.sub_level_id === t1._id)?.positions }));
       }
 
       res.send({ success: true, data: { parent: { id, type }, childrenData } });
