@@ -368,7 +368,6 @@ module.exports = {
           query[`${type}_id`] = id;
           break;
       }
-      query[`${type}_id`] = id;
 
       let childrenData = await getChildModel(type).find(query);
 
