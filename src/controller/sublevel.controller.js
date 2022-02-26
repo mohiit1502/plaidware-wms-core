@@ -71,7 +71,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      res.send({ success: true, data: sublevelData });
+      res.send({ ...sublevelData?._doc, positions });
     } catch (error) {
       next(error);
     }
