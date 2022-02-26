@@ -70,7 +70,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      req.send(sublevelData);
+      res.send({ success: true, data: sublevelData });
     } catch (error) {
       next(error);
     }

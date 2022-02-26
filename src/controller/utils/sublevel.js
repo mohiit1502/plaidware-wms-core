@@ -58,7 +58,7 @@ const deleteSubLevelTreeFromRoot = async (root_sub_level_id) => {
 const addSublevelToParent = async (payload, parent_id, parentIsLevel) => {
   if (parentIsLevel) {
     // add sublevel to parent
-    const parentData = await Sublevel.findById(parent_id);
+    const parentData = await Level.findById(parent_id);
     parentData.sub_levels.push(payload);
     return await parentData.save();
   } else {

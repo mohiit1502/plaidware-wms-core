@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { InventoryTypes, WarehouseScopes } = require("./../config/constants");
+// const { InventoryTypes } = require("./../config/constants");
 
 const schema = new mongoose.Schema(
   {
@@ -8,49 +8,41 @@ const schema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    type: {
+    widgetName: {
       type: String,
       required: true,
       trim: true,
-      enum: InventoryTypes,
     },
     policies: {
       orderTracking: {
         type: Object, // Create a different model and reference it here once more details available
       },
       alerting: {
-        lowestStockLevel: {
-          type: Boolean,
-          required: true,
-        },
-        highestStockLevel: {
-          type: Boolean,
-          required: true,
-        },
-        alertStockLevel: {
-          type: Boolean,
-          required: true,
-        },
-        reOrderLevel: {
-          type: Boolean,
-          required: true,
-        },
+        type: Boolean,
+        required: true,
       },
       replenishment: {
+        type: Boolean, // Create a different model and reference it here once more details available
+      },
+      inventory_process: {
+        type: String,
+        required: true,
+      },
+      // preferredLocations: [
+      //   {
+      //     id: {
+      //       type: mongoose.Schema.Types.ObjectId,
+      //       refPath: "type",
+      //     },
+      //     type: {
+      //       type: String,
+      //       enum: WarehouseScopes,
+      //     },
+      //   },
+      // ],
+      preferredLocations: {
         type: Object, // Create a different model and reference it here once more details available
       },
-      preferredLocations: [
-        {
-          id: {
-            type: mongoose.Schema.Types.ObjectId,
-            refPath: "type",
-          },
-          type: {
-            type: String,
-            enum: WarehouseScopes,
-          },
-        },
-      ],
     },
   },
   {

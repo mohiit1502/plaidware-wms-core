@@ -17,6 +17,13 @@ const schema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    usageReason: {
+      type: String,
+      trim: true,
+    },
+    job: {
+      type: mongoose.Schema.Types.ObjectId,
+    },
   },
   {
     timestamps: true,
@@ -35,7 +42,7 @@ const PutItemTransaction = ItemTransaction.discriminator(
     },
     subLevel: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Sublevel"
+      ref: "Sublevel",
     },
   })
 );
@@ -61,13 +68,8 @@ const ReserveItemTransaction = ItemTransaction.discriminator(
       type: Number,
       required: true,
     },
-    job: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-    },
     pickupDate: {
       type: Date,
-      required: true,
     },
   })
 );
@@ -77,7 +79,6 @@ const CheckInItemTransaction = ItemTransaction.discriminator(
   new mongoose.Schema({
     checkInMeterReading: {
       type: Number,
-      required: true,
     },
     hasIssue: {
       type: Boolean,
@@ -95,15 +96,6 @@ const CheckOutItemTransaction = ItemTransaction.discriminator(
   new mongoose.Schema({
     checkOutMeterReading: {
       type: Number,
-      required: true,
-    },
-    job: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-    },
-    usageReason: {
-      type: String,
-      trim: true,
     },
   })
 );

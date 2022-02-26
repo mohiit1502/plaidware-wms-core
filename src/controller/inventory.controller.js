@@ -1,6 +1,7 @@
 const Inventory = require("../models/Inventory");
 const WidgetFamily = require("../models/WidgetFamily");
 const { InventoryTypes } = require("../config/constants");
+const mongoose = require("mongoose");
 
 module.exports = {
   /**
@@ -37,10 +38,10 @@ module.exports = {
    * Create a Inventory
    */
   createInventory: async (req, res, next) => {
-    const { name, type, policies } = req.body;
+    const { name, policies, widgetName } = req.body;
 
-    if (!(name && type)) {
-      res.status(400).send("Missing params param");
+    if (!(name && widgetName)) {
+      res.status(400).send("Missing params name");
       return;
     }
     const preferredLocations = [];
@@ -51,21 +52,17 @@ module.exports = {
     }
 
     const verifiedPolicies = {
-      orderTracking: policies.orderTracking || {},
-      alerting: {
-        lowestStockLevel: policies.alerting && policies.alerting.lowestStockLevel ? policies.alerting.lowestStockLevel : false,
-        highestStockLevel: policies.alerting && policies.alerting.highestStockLevel ? policies.alerting.highestStockLevel : false,
-        alertStockLevel: policies.alerting && policies.alerting.alertStockLevel ? policies.alerting.alertStockLevel : false,
-        reOrderLevel: policies.alerting && policies.alerting.reOrderLevel ? policies.alerting.reOrderLevel : false,
-      },
-      replenishment: policies.replenishment || {},
-      preferredLocations: preferredLocations,
+      orderTracking: policies.orderTracking || false,
+      alerting: policies.alerting || false,
+      replenishment: policies.replenishment || false,
+      preferredLocations: preferredLocations || false,
+      inventory_process: policies.inventory_process,
     };
 
     try {
       const inventoryData = new Inventory({
         name,
-        type,
+        widgetName,
         policies: verifiedPolicies,
       });
 
@@ -74,7 +71,8 @@ module.exports = {
         res.status(404);
         return;
       }
-      res.send({ success: true, data: inventoryData });
+      // const widgetFamilyData = createWidgetFamiliesData(inventoryData, widgetFamily);
+      res.send({ success: true, data: { inventoryData } });
     } catch (error) {
       next(error);
     }
@@ -84,65 +82,46 @@ module.exports = {
    * Update a Inventory detail
    */
   updateInventoryByID: async (req, res, next) => {
-    const { id } = req.params;
-
-    if (!id) {
-      res.status(400).send("Missing id param");
-      return;
-    }
-
-    const { name, type, policies } = req.body;
-
-    if (!(name || type)) {
-      res.status(400).send("Missing data in body");
-      return;
-    }
-
     try {
-      const inventoryData = await Inventory.findById(id);
-      if (!inventoryData) {
-        res.status(404);
+      const { id } = req.params;
+
+      if (!(id && mongoose.isValidObjectId(id))) {
+        res.status(400).send("Missing/Improper id param");
         return;
       }
 
-      if (name) inventoryData.name = name;
-      if (type) inventoryData.type = type;
+      const inventory = await Inventory.findById(id);
 
-      if (policies) {
-        const preferredLocations = [];
-        if (policies.preferredLocations && Array.isArray(policies.preferredLocations)) {
-          for (const preferredLocation of policies.preferredLocations) {
-            preferredLocations.push({ id: preferredLocation.id, type: preferredLocation.type });
-          }
-        }
-
-        inventoryData.policies = {
-          orderTracking: policies.orderTracking || inventoryData.policies.orderTracking,
-          alerting: {
-            lowestStockLevel:
-              policies.alerting && policies.alerting.lowestStockLevel !== undefined
-                ? policies.alerting.lowestStockLevel
-                : inventoryData.policies.alerting.lowestStockLevel,
-            highestStockLevel:
-              policies.alerting && policies.alerting.highestStockLevel !== undefined
-                ? policies.alerting.highestStockLevel
-                : inventoryData.policies.alerting.highestStockLevel,
-            alertStockLevel:
-              policies.alerting && policies.alerting.alertStockLevel !== undefined
-                ? policies.alerting.alertStockLevel
-                : inventoryData.policies.alerting.alertStockLevel,
-            reOrderLevel:
-              policies.alerting && policies.alerting.reOrderLevel !== undefined
-                ? policies.alerting.reOrderLevel
-                : inventoryData.policies.alerting.reOrderLevel,
-          },
-          replenishment: policies.replenishment || inventoryData.policies.replenishment,
-          preferredLocations: preferredLocations,
-        };
+      if (!inventory) {
+        res.status(400).send("Inventory not found");
+        return;
+      }
+      let { name, policies, widgetName } = req.body;
+      if (name) {
+        inventory.name = name;
       }
 
-      await inventoryData.save();
-      res.send({ success: true, data: inventoryData });
+      if (widgetName) {
+        inventory.widgetName = widgetName;
+      }
+
+      if (!policies) {
+        policies = {};
+      }
+
+      // const widgetFamilyData = createWidgetFamiliesData(inventory, widgetFamily);
+
+      const verifiedPolicies = {
+        orderTracking: policies.orderTracking !== undefined ? policies.orderTracking : inventory.policies.orderTracking,
+        alerting: policies.alerting !== undefined ? policies.alerting : inventory.policies.alerting,
+        replenishment: policies.replenishment !== undefined ? policies.replenishment : inventory.policies.replenishment,
+        preferredLocations: policies.replenishment !== undefined ? policies.replenishment : inventory.policies.preferredLocations,
+        inventory_process: policies.inventory_process || inventory.policies.inventory_process,
+      };
+
+      inventory.policies = verifiedPolicies;
+      await inventory.save();
+      res.send({ success: true, data: { inventory } });
     } catch (error) {
       next(error);
     }

@@ -93,6 +93,9 @@ const schema = new mongoose.Schema(
       alertStockLevelCount: {
         type: Number,
       },
+      reorderStockLevelCount: {
+        type: Number,
+      },
     },
   },
   {

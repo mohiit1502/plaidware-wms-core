@@ -29,7 +29,7 @@ module.exports = {
     }
 
     try {
-      const itemData = await Item.findById(id);
+      const itemData = await Item.findById(id).populate({ path: "widgetFamily", populate: "inventory" });
       if (!itemData) {
         res.status(404);
         return;
@@ -63,6 +63,12 @@ module.exports = {
       countPerPalletPackage: req.body.countPerPalletPackage,
       customAttributes: req.body.customAttributes,
       widgetFamily: widgetFamily,
+      policiesMetadata: {
+        underStockLevelCount: req.body.policiesMetadata.underStockLevelCount,
+        overStockLevelCount: req.body.policiesMetadata.overStockLevelCount,
+        alertStockLevelCount: req.body.policiesMetadata.alertStockLevelCount,
+        reorderStockLevelCount: req.body.policiesMetadata.reorderStockLevelCount,
+      },
     };
 
     for (const key of Object.keys(item)) {
@@ -229,7 +235,7 @@ module.exports = {
         return;
       }
 
-      const { putQuantity, subLevel } = req.body;
+      const { putQuantity, subLevel, usageReason, job } = req.body;
       if (!(putQuantity && putQuantity > 0) || !(subLevel && mongoose.isValidObjectId(subLevel))) {
         res.status(400).send("Invalid value for putQuantity/subLevel");
         return;
@@ -250,6 +256,8 @@ module.exports = {
         performedBy: res.locals.user,
         putQuantity: putQuantity,
         subLevel: subLevelObj,
+        usageReason: usageReason ? usageReason : "",
+        job: job,
       });
       res.send({ success: true, data: { itemAssociation, itemTransaction } });
       res.send({ success: true, data: { itemAssociation, itemTransaction } });
@@ -272,7 +280,7 @@ module.exports = {
         return;
       }
 
-      const { pickupQuantity, subLevel } = req.body;
+      const { pickupQuantity, subLevel, usageReason, job } = req.body;
       if (!(pickupQuantity && pickupQuantity > 0) || !(subLevel && mongoose.isValidObjectId(subLevel))) {
         res.status(400).send("Invalid value for pickupQuantity/subLevel");
         return;
@@ -293,6 +301,8 @@ module.exports = {
         performedBy: res.locals.user,
         pickupQuantity: pickupQuantity,
         subLevel: subLevelObj,
+        usageReason: usageReason ? usageReason : "",
+        job: job,
       });
       res.send({ success: true, data: { itemAssociation, itemTransaction } });
     } catch (error) {
@@ -314,15 +324,15 @@ module.exports = {
         return;
       }
 
-      const { reserveQuantity, job, pickupDate } = req.body;
-      if (!(reserveQuantity && reserveQuantity > 0) || !(job && mongoose.isValidObjectId(job)) || !(pickupDate && Date.parse(pickupDate))) {
-        res.status(400).send("Invalid value for reserveQuantity/job/pickupDate");
+      const { reserveQuantity, job, pickupDate, usageReason } = req.body;
+      if (!(reserveQuantity && reserveQuantity > 0) || !(job && mongoose.isValidObjectId(job))) {
+        res.status(400).send("Invalid value for reserveQuantity/job");
         return;
       }
 
       const itemAssociation = await ItemAssociation.findOne({ item_id: item._id, availableQuantity: { $gte: reserveQuantity } });
       if (!itemAssociation) {
-        res.status(500).send("Quantity unavailable");
+        res.status(500).send({ success: false, error: "Quantity unavailable" });
         return;
       }
       itemAssociation.reservedQuantity = itemAssociation.reservedQuantity + reserveQuantity;
@@ -335,7 +345,8 @@ module.exports = {
         performedBy: res.locals.user,
         reserveQuantity: reserveQuantity,
         job: job,
-        pickupDate: Date.parse(pickupDate),
+        pickupDate: pickupDate ? Date.parse(pickupDate) : undefined,
+        usageReason: usageReason ? usageReason : "",
       });
       res.send({ success: true, data: { itemAssociation, itemTransaction } });
     } catch (error) {
@@ -357,19 +368,17 @@ module.exports = {
         return;
       }
 
-      const { checkInMeterReading, hasIssue, issueDescription } = req.body;
-      if (!(checkInMeterReading && checkInMeterReading > 0)) {
-        res.status(400).send("Invalid value for checkInMeterReading");
-        return;
-      }
+      const { checkInMeterReading, hasIssue, issueDescription, usageReason, job } = req.body;
 
       const itemTransaction = await CheckInItemTransaction.create({
         type: "CHECK-IN",
         performedOn: item,
         performedBy: res.locals.user,
         checkInMeterReading: checkInMeterReading,
-        hasIssue: hasIssue,
+        hasIssue: hasIssue || false,
         issueDescription: hasIssue ? issueDescription : "",
+        usageReason: usageReason ? usageReason : "",
+        job: job,
       });
       res.send({ success: true, data: { itemTransaction } });
     } catch (error) {
@@ -391,19 +400,15 @@ module.exports = {
         return;
       }
 
-      const { checkOutMeterReading, job, usageReason } = req.body;
-      if (!(checkOutMeterReading && checkOutMeterReading > 0) || !(job && mongoose.isValidObjectId(job))) {
-        res.status(400).send("Invalid value for checkOutMeterReading/job");
-        return;
-      }
+      const { checkOutMeterReading, usageReason, job } = req.body;
 
       const itemTransaction = await CheckOutItemTransaction.create({
         type: "CHECK-OUT",
         performedOn: item,
         performedBy: res.locals.user,
         checkOutMeterReading: checkOutMeterReading,
-        job: job,
         usageReason: usageReason ? usageReason : "",
+        job: job,
       });
       res.send({ success: true, data: { itemTransaction } });
     } catch (error) {
@@ -425,7 +430,7 @@ module.exports = {
         return;
       }
 
-      const { reportingFor, details } = req.body;
+      const { reportingFor, details, usageReason, job } = req.body;
       if (!(reportingFor && ReportItemForTypes.includes(reportingFor))) {
         res.status(400).send("Invalid value for checkOutMeterReading/job");
         return;
@@ -437,6 +442,8 @@ module.exports = {
         performedBy: res.locals.user,
         reportingFor: reportingFor,
         details: details ? details : "",
+        usageReason: usageReason ? usageReason : "",
+        job: job,
       });
       res.send({ success: true, data: { itemTransaction } });
     } catch (error) {
@@ -458,7 +465,7 @@ module.exports = {
         return;
       }
 
-      const { recountedQuantity, damagedQuantity, subLevel } = req.body;
+      const { recountedQuantity, damagedQuantity, subLevel, usageReason, job } = req.body;
       if (!(recountedQuantity && recountedQuantity > 0) || !(subLevel && mongoose.isValidObjectId(subLevel))) {
         res.status(400).send("Invalid value for pickupQuantity/subLevel");
         return;
@@ -483,6 +490,8 @@ module.exports = {
         damagedQuantity,
         totalAdjustment,
         newAdjustedQuantity: itemAssociation.totalQuantity,
+        usageReason: usageReason ? usageReason : "",
+        job: job,
       });
       res.send({ success: true, data: { itemAssociation, itemTransaction } });
     } catch (error) {

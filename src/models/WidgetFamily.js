@@ -14,13 +14,15 @@ const schema = new mongoose.Schema(
     inventory: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Inventory",
-      required: true
+      required: true,
     },
   },
   {
     timestamps: true,
   }
 );
+
+schema.index({ name: 1, parent: 1, inventory: 1 }, { unique: true });
 
 const WidgetFamily = mongoose.model("WidgetFamily", schema);
 
