@@ -12,6 +12,12 @@ const schema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    icon_slug: {
+      type: String,
+      trim: true,
+      required: true,
+      // enum: []
+    },
     widgetName: {
       type: String,
       required: true,

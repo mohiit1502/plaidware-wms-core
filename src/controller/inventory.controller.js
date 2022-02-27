@@ -64,11 +64,11 @@ module.exports = {
    * Create a Inventory
    */
   createInventory: async (req, res, next) => {
-    let { name, policies, widgetName } = req.body;
+    let { name, policies, widgetName, icon_slug } = req.body;
     const image = req.file;
 
-    if (!(name && widgetName)) {
-      res.status(400).send("Missing params name");
+    if (!(name && widgetName && icon_slug)) {
+      res.status(400).send("Missing params");
       return;
     }
     const preferredLocations = [];
@@ -93,13 +93,11 @@ module.exports = {
         name,
         widgetName,
         policies: verifiedPolicies,
+        icon_slug,
       });
 
       if (image) {
-        const url = await S3.uploadFile(
-          `inventory/${inventoryData._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`,
-          image.path
-        );
+        const url = await S3.uploadFile(`inventory/${inventoryData._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`, image.path);
         inventoryData.image_url = url;
       }
 
@@ -133,7 +131,7 @@ module.exports = {
         res.status(400).send("Inventory not found");
         return;
       }
-      let { name, policies, widgetName } = req.body;
+      let { name, policies, widgetName, icon_slug } = req.body;
       if (name) {
         inventory.name = name;
       }
@@ -142,6 +140,9 @@ module.exports = {
         inventory.widgetName = widgetName;
       }
 
+      if (icon_slug) {
+        inventory.icon_slug = icon_slug;
+      }
       if (!policies) {
         policies = {};
       }
@@ -159,10 +160,7 @@ module.exports = {
       inventory.policies = verifiedPolicies;
       const image = req.file;
       if (image) {
-        const url = await S3.uploadFile(
-          `inventory/${inventory._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`,
-          image.path
-        );
+        const url = await S3.uploadFile(`inventory/${inventory._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`, image.path);
         inventory.image_url = url;
       }
 
