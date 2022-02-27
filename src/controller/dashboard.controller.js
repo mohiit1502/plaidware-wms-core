@@ -10,6 +10,7 @@ const Sublevel = require("../models/Sublevel");
 const Inventory = require("../models/Inventory");
 const WidgetFamily = require("../models/WidgetFamily");
 const Item = require("../models/Item");
+const { deleteSubLevelTreeFromRoot } = require("./utils/sublevel");
 
 const createWarehouse = async ({ name, address, specs, company_id }) => {
   if (!(name && address)) {
@@ -251,22 +252,42 @@ const createWidgetFamilies = async (widgetFamilies, inventory, parent = undefine
   return widgetFamiliesData;
 };
 
-const getChildModel = (parentType) => {
-  switch (parentType) {
+const getLocationTypeModel = (type) => {
+  switch (type) {
     case "warehouse":
-      return Zone;
+      return Warehouse;
     case "zone":
-      return Area;
+      return Zone;
     case "area":
-      return Row;
+      return Area;
     case "row":
-      return Bay;
+      return Row;
     case "bay":
-      return Level;
+      return Bay;
     case "level":
-      return Sublevel;
+      return Level;
     case "sublevel":
       return Sublevel;
+    default:
+      throw new Error("Invalid model type");
+  }
+};
+
+const getChildType = (parentType) => {
+  switch (parentType) {
+    case "warehouse":
+      return "zone";
+    case "zone":
+      return "area";
+    case "area":
+      return "row";
+    case "row":
+      return "bay";
+    case "bay":
+      return "level";
+    case "level":
+    case "sublevel":
+      return "sublevel";
     default:
       throw new Error("Invalid model type");
   }
@@ -369,7 +390,7 @@ module.exports = {
           break;
       }
 
-      let childrenData = await getChildModel(type).find(query);
+      let childrenData = await getLocationTypeModel(getChildType(type)).find(query);
 
       // populate locations to sublevel
       if (childrenData && ["level", "sublevel"].includes(type)) {
@@ -383,6 +404,24 @@ module.exports = {
       }
 
       res.send({ success: true, data: { parent: { id, type }, childrenData } });
+    } catch (error) {
+      next(error);
+    }
+  },
+  deleteByIdAndLocationType: async (req, res, next) => {
+    const { id, type } = req.body;
+    let removedIDs;
+    try {
+      switch (type) {
+        case "sublevel":
+          removedIDs = await deleteSubLevelTreeFromRoot(id);
+          break;
+
+        default:
+          removedIDs = await getLocationTypeModel(type).deleteOne({ _id: id });
+          break;
+      }
+      res.send({ success: true, data: { removedIDs, deleted: { id, type } } });
     } catch (error) {
       next(error);
     }

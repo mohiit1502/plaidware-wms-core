@@ -16,4 +16,9 @@ router.post("/create-inventory-schema", controller.createInventorySchema);
  */
 router.post("/get-children-from-parent", controller.getChildrenFromParent);
 
+/**
+ * @route /dashboard/location
+ */
+router.post("/delete-location", controller.deleteByIdAndLocationType);
+
 module.exports = router;
