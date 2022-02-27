@@ -31,6 +31,7 @@ module.exports = {
    * Create a sublevel
    */
   createSubLevel: async (req, res, next) => {
+    console.log(req.body);
     const { name, type, specs, parent_id, parentIsLevel, positions } = req.body;
 
     if (!(name && type && parent_id && positions)) {
@@ -70,7 +71,7 @@ module.exports = {
         res.status(404);
         return;
       }
-      res.send({ success: true, data: sublevelData });
+      res.send({ ...sublevelData?._doc, positions });
     } catch (error) {
       next(error);
     }

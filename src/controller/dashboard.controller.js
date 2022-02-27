@@ -356,10 +356,32 @@ module.exports = {
       const { id, type } = req.body;
       if (!id || !type) return res.send({ success: false, message: "Missing id or type" });
 
-      const query = {};
-      query[`${type}_id`] = id;
+      let query = {};
 
-      const childrenData = await getChildModel(type).find(query);
+      switch (type) {
+        case "level":
+        case "sublevel":
+          query = { $or: [{ main_level_id: id, parent_sublevel_id: id }] };
+          break;
+
+        default:
+          query[`${type}_id`] = id;
+          break;
+      }
+
+      let childrenData = await getChildModel(type).find(query);
+
+      // populate locations to sublevel
+      if (childrenData && ["level", "sublevel"].includes(type)) {
+        const parentData = type === "level" ? await Level.findById(id) : await Sublevel.findById(id);
+        childrenData =
+          parentData &&
+          childrenData.map((child) => ({
+            ...child?._doc,
+            positions: parentData.sub_levels?.find((t2) => t2.sub_level_id.toString() === child._id.toString())?.positions,
+          }));
+      }
+
       res.send({ success: true, data: { parent: { id, type }, childrenData } });
     } catch (error) {
       next(error);
