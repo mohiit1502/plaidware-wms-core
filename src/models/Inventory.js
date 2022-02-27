@@ -8,6 +8,10 @@ const schema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    image_url: {
+      type: String,
+      trim: true,
+    },
     widgetName: {
       type: String,
       required: true,

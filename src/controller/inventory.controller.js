@@ -1,7 +1,9 @@
+const mongoose = require("mongoose");
+
 const Inventory = require("../models/Inventory");
 const WidgetFamily = require("../models/WidgetFamily");
 const { InventoryTypes } = require("../config/constants");
-const mongoose = require("mongoose");
+const { S3 } = require("./../config/aws");
 
 module.exports = {
   /**
@@ -34,11 +36,36 @@ module.exports = {
     }
   },
 
+  getInventories: async (req, res, next) => {
+    let { page, perPage } = req.query;
+    page = page ? parseInt(page) : 0;
+    perPage = perPage ? parseInt(perPage) : 10;
+
+    try {
+      const inventoryData = await Inventory.find()
+        .skip(parseInt(page) * parseInt(perPage))
+        .limit(parseInt(perPage));
+      if (!inventoryData) {
+        res.status(404);
+        return;
+      }
+
+      for (const inventory of inventoryData) {
+        inventory["widgetFamilies"] = await WidgetFamily.find({ inventory: inventory._id });
+      }
+
+      res.send({ success: true, data: inventoryData });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   /**
    * Create a Inventory
    */
   createInventory: async (req, res, next) => {
-    const { name, policies, widgetName } = req.body;
+    let { name, policies, widgetName } = req.body;
+    const image = req.file;
 
     if (!(name && widgetName)) {
       res.status(400).send("Missing params name");
@@ -49,6 +76,8 @@ module.exports = {
       for (const preferredLocation of policies.preferredLocations) {
         preferredLocations.push({ id: preferredLocation.id, type: preferredLocation.type });
       }
+    } else if (!policies) {
+      policies = {};
     }
 
     const verifiedPolicies = {
@@ -66,12 +95,20 @@ module.exports = {
         policies: verifiedPolicies,
       });
 
+      if (image) {
+        const url = await S3.uploadFile(
+          `inventory/${inventoryData._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`,
+          image.path
+        );
+        inventoryData.image_url = url;
+      }
+
       await inventoryData.save();
       if (!inventoryData) {
         res.status(404);
         return;
       }
-      // const widgetFamilyData = createWidgetFamiliesData(inventoryData, widgetFamily);
+
       res.send({ success: true, data: { inventoryData } });
     } catch (error) {
       next(error);
@@ -120,6 +157,15 @@ module.exports = {
       };
 
       inventory.policies = verifiedPolicies;
+      const image = req.file;
+      if (image) {
+        const url = await S3.uploadFile(
+          `inventory/${inventory._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`,
+          image.path
+        );
+        inventory.image_url = url;
+      }
+
       await inventory.save();
       res.send({ success: true, data: { inventory } });
     } catch (error) {
