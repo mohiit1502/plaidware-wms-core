@@ -1,7 +1,12 @@
 const Sublevel = require("../models/Sublevel");
 const mongoose = require("mongoose");
+const { filterSublevels } = require("./utils/aggregation");
 const { addSublevelToParent, deleteSubLevelTreeFromRoot, validPositions } = require("./utils/sublevel");
 const { SubLevelTypes } = require("../config/constants");
+
+const getLabelTerm = (name) => {
+  return name.toString().slice(name.toString().length - 3);
+};
 
 module.exports = {
   /**
@@ -182,5 +187,45 @@ module.exports = {
     } catch (error) {
       next(error);
     }
+  },
+
+  filterSublevels: async (req, res, next) => {
+    const { warehouse, zone, area, row } = req.body;
+    const results = await filterSublevels({ warehouse, zone, area, row });
+    const resultsGroupedByBay = {};
+    for (const resultItem of results) {
+      if (resultsGroupedByBay[resultItem.bay._id]) {
+        resultsGroupedByBay[resultItem.bay._id].location_data.push({
+          level: { id: resultItem.level._id, name: resultItem.level.name },
+          sublevel: { id: resultItem.sublevel1._id, name: resultItem.sublevel1.name },
+          label: `Z${getLabelTerm(resultItem.zone._id)}-A${getLabelTerm(resultItem.area._id)}-R${getLabelTerm(resultItem.row._id)}-B${getLabelTerm(
+            resultItem.bay._id
+          )}-L${getLabelTerm(resultItem.level._id)}-${resultItem.sublevel1.name}`,
+        });
+      } else {
+        resultsGroupedByBay[resultItem.bay._id] = {
+          warehouse: { id: resultItem._id, name: resultItem.name },
+          zone: { id: resultItem.zone._id, name: resultItem.area.name },
+          area: { id: resultItem.area._id, name: resultItem.area.name },
+          row: { id: resultItem.row._id, name: resultItem.row.name },
+          bay: { id: resultItem.bay._id, name: resultItem.bay.name },
+          totem_label: [
+            `Z${getLabelTerm(resultItem.zone._id)}-A${getLabelTerm(resultItem.area._id)}-R${getLabelTerm(resultItem.row._id)}-B${getLabelTerm(
+              resultItem.bay._id
+            )}}`,
+          ],
+          location_data: [
+            {
+              level: { id: resultItem.level._id, name: resultItem.level.name },
+              sublevel: { id: resultItem.sublevel1._id, name: resultItem.sublevel1.name },
+              label: `Z${getLabelTerm(resultItem.zone._id)}-A${getLabelTerm(resultItem.area._id)}-R${getLabelTerm(
+                resultItem.row._id
+              )}-B${getLabelTerm(resultItem.bay._id)}-L${getLabelTerm(resultItem.level._id)}-${resultItem.sublevel1.name}`,
+            },
+          ],
+        };
+      }
+    }
+    res.send({ success: true, data: Object.values(resultsGroupedByBay) });
   },
 };
