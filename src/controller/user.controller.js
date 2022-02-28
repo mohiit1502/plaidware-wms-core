@@ -1,12 +1,11 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
-
 const User = require("./../models/User");
 const { JWT_SECRET, JWT_REFRESH_EXPIRY_TIME, JWT_ACCESS_EXPIRY_TIME } = require("./../config/env");
 const UserRole = require("../models/UserRole");
-const UserPermission = require("../models/UserPermission");
-const { AllUIModules } = require("../config/constants");
+const { getScopes } = require("./utils/access-control");
+const { InventoryScopes, WarehouseScopes, UserActions, AllUIModules } = require("./../config/constants");
 
 const createAccessToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, {
@@ -89,48 +88,86 @@ module.exports = {
 
   addUserAccessControl: async (req, res, next) => {
     const { user } = req.params;
-    const { roles, permissions } = req.body;
+    const {
+      roles,
+      permissions: { inventoryScopes, warehouseScopes, actions, allowedUIModules },
+    } = req.body;
     if (!mongoose.isValidObjectId(user)) {
       throw new Error(`invalid format for user id field`);
     }
+    const userObject = await User.findById(user);
+    if (!userObject) {
+      res.status(404).send({ success: false, error: "User not found" });
+    }
 
-    let verifiedRoleIds = await getValidIds(roles, UserRole);
-    let verifiedPermissionIds = await getValidIds(permissions, UserPermission);
-    verifiedRoleIds = verifiedRoleIds || [];
-    verifiedPermissionIds = verifiedPermissionIds || [];
+    if (roles) {
+      let verifiedRoleIds = await getValidIds(roles, UserRole);
+      verifiedRoleIds = verifiedRoleIds || [];
+      userObject.roles = Array.from(new Set([...userObject.roles, ...verifiedRoleIds]));
+    }
 
-    const response = await User.findByIdAndUpdate(
-      user,
-      {
-        $push: {
-          roles: { $each: verifiedRoleIds },
-          permissions: { $each: verifiedPermissionIds },
-        },
-      },
-      { returnDocument: "after" }
-    );
-    res.send({ success: true, data: response });
+    if (inventoryScopes) {
+      const verifiedInventoryScopes = await getScopes(inventoryScopes, InventoryScopes);
+      userObject.permissions.inventoryScopes = Array.from(new Set([...userObject.permissions.inventoryScopes, ...verifiedInventoryScopes]));
+    }
+    if (warehouseScopes) {
+      const verifiedWarehouseScopes = await getScopes(warehouseScopes, WarehouseScopes);
+      userObject.permissions.warehouseScopes = Array.from(new Set([...userObject.permissions.warehouseScopes, ...verifiedWarehouseScopes]));
+    }
+    if (actions) {
+      userObject.permissions.actions = Array.from(new Set([...userObject.permissions.actions, ...actions.filter((_) => UserActions.includes(_))]));
+    }
+    if (allowedUIModules) {
+      userObject.permissions.allowedUIModules = Array.from(
+        new Set([...userObject.permissions.allowedUIModules, ...allowedUIModules.filter((_) => AllUIModules.includes(_))])
+      );
+    }
+    await userObject.save();
+    res.send({ success: true, data: userObject });
   },
 
   removeUserAccessControl: async (req, res, next) => {
     const { user } = req.params;
-    const { roles, permissions } = req.body;
+    const {
+      roles,
+      permissions: { inventoryScopes, warehouseScopes, actions, allowedUIModules },
+    } = req.body;
     if (!mongoose.isValidObjectId(user)) {
       throw new Error(`invalid format for user id field`);
     }
-    const verifiedRoleIds = await getValidIds(roles, UserRole);
-    const verifiedPermissionIds = await getValidIds(permissions, UserPermission);
-    const response = await User.findByIdAndUpdate(
-      user,
-      {
-        $pull: {
-          roles: { $in: verifiedRoleIds },
-          permissions: { $in: verifiedPermissionIds },
-        },
-      },
-      { returnDocument: "after" }
-    );
-    res.send({ success: true, data: response });
+    const userObject = await User.findById(user);
+    if (!userObject) {
+      res.status(404).send({ success: false, error: "User not found" });
+    }
+
+    if (roles) {
+      let verifiedRoleIds = await getValidIds(roles, UserRole);
+      verifiedRoleIds = verifiedRoleIds || [];
+      userObject.roles = userObject.roles.filter((_) => !verifiedRoleIds.includes(_));
+    }
+
+    if (inventoryScopes) {
+      const verifiedInventoryScopes = await getScopes(inventoryScopes, InventoryScopes);
+      userObject.permissions.inventoryScopes = userObject.permissions.inventoryScopes.filter((_) => !verifiedInventoryScopes.includes(_.id));
+    }
+    if (warehouseScopes) {
+      const verifiedWarehouseScopes = await getScopes(warehouseScopes, WarehouseScopes);
+      userObject.permissions.warehouseScopes = userObject.permissions.warehouseScopes.filter((warehouseScope) => {
+        for (const verifiedWarehouseScope of verifiedWarehouseScopes) {
+          if (verifiedWarehouseScope.id == warehouseScope.id && verifiedWarehouseScope.type == warehouseScope.type) {
+            return false;
+          }
+        }
+      });
+    }
+    if (actions) {
+      userObject.permissions.actions = userObject.permissions.actions.filter((_) => !actions.includes(_));
+    }
+    if (allowedUIModules) {
+      userObject.permissions.allowedUIModules = userObject.permissions.allowedUIModules.filter((_) => !allowedUIModules.includes(_));
+    }
+    await userObject.save();
+    res.send({ success: true, data: userObject });
   },
 
   getUIAccessControl: async (req, res, next) => {

@@ -20,14 +20,14 @@ module.exports = {
     const { id } = req.params;
 
     if (!id) {
-      res.status(400).send("Missing id param");
+      res.status(400).send({ success: false, error: "Missing id param" });
       return;
     }
 
     try {
       const inventoryData = await Inventory.findById(id);
       if (!inventoryData) {
-        res.status(404);
+        res.status(404).send({ success: false, error: "Inventory not found" });
         return;
       }
       res.send({ success: true, data: inventoryData });
