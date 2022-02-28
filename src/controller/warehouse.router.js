@@ -20,7 +20,18 @@ router.get("/:id/zones", controller.getWarehouseZonesByID);
 /**
  * @route /warehouse/
  */
-router.post("/", controller.createWarehouse);
+router.post("/", upload.any("images"), controller.createWarehouse);
+
+/**
+ * @route /warehouse/:id/image
+ */
+router.post("/:id/image", upload.single("image"), controller.addImageToWarehouse);
+
+/**
+ * @route /warehouse/:id/image/:image_id
+ */
+router.delete("/:id/image/:image_id", controller.removeImageFromWarehouse);
+
 
 /**
  * @route /warehouse/add-image

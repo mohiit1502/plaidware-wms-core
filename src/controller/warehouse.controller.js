@@ -1,5 +1,6 @@
 const Warehouse = require("../models/Warehouse");
 const mongoose = require("mongoose");
+const { S3 } = require("./../config/aws");
 
 module.exports = {
   /**
@@ -49,6 +50,18 @@ module.exports = {
         res.status(404).send({ success: false, message: "not found" });
         return;
       }
+
+      const images = req.files;
+
+      for (let i = 0; i < images.length; i++) {
+        const url = await S3.uploadFile(
+          `warehouse/${warehouseData._id.toString()}-${Date.now()}-${i}.${images[i].originalname.split(".").slice(-1).pop()}`,
+          images[i].path
+        );
+        warehouseData.images ||= [];
+        warehouseData.images.push({ url });
+      }
+      warehouseData.save();
       res.send({ success: true, message: warehouseData });
     } catch (error) {
       next(error);
@@ -143,5 +156,49 @@ module.exports = {
     } catch (error) {
       next(error);
     }
+  },
+  addImageToWarehouse: async (req, res, next) => {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).send({ success: false, error: "invalid id" });
+    }
+
+    const warehouse = await Warehouse.findById(id);
+    if (!warehouse) {
+      res.status(404).send({ success: false, error: "warehouse not found" });
+    }
+
+    const image = req.file;
+    const url = await S3.uploadFile(
+      `warehouse/${warehouse._id.toString()}-${Date.now()}-0.${image.originalname.split(".").slice(-1).pop()}`,
+      image.path
+    );
+    warehouse.images ||= [];
+    warehouse.images.push({ url });
+    await warehouse.save();
+
+    res.send({ success: true, data: warehouse });
+  },
+
+  removeImageFromWarehouse: async (req, res, next) => {
+    const { id, image_id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).send({ success: false, error: "invalid id" });
+    }
+    if (!mongoose.isValidObjectId(image_id)) {
+      res.status(400).send({ success: false, error: "invalid image_id" });
+    }
+
+    const warehouse = await Warehouse.findById(id);
+    if (!warehouse) {
+      res.status(404).send({ success: false, error: "warehouse not found" });
+    }
+
+    warehouse.images = warehouse.images.filter((warehouseImage) => {
+      return warehouseImage._id.toString() != image_id;
+    });
+
+    await warehouse.save();
+    res.send({ success: true, data: warehouse });
   },
 };
