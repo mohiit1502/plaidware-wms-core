@@ -230,7 +230,14 @@ module.exports = {
     }
   },
   createUser: async (req, res, next) => {
-    const { email, fullName, password } = req.body;
+    const {
+      email,
+      fullName,
+      password,
+      roles,
+      permissions: { inventoryScopes, warehouseScopes, actions, allowedUIModules },
+    } = req.body;
+
     try {
       const salt = await bcrypt.genSalt();
       const newUser = {
@@ -240,6 +247,27 @@ module.exports = {
         createdBy: res.locals.user,
       };
 
+      if (roles) {
+        let verifiedRoleIds = await getValidIds(roles, UserRole);
+        verifiedRoleIds = verifiedRoleIds || [];
+        newUser.roles = verifiedRoleIds;
+      }
+
+      newUser.permissions = {};
+      if (inventoryScopes) {
+        const verifiedInventoryScopes = await getScopes(inventoryScopes, InventoryScopes);
+        newUser.permissions.inventoryScopes = verifiedInventoryScopes;
+      }
+      if (warehouseScopes) {
+        const verifiedWarehouseScopes = await getScopes(warehouseScopes, WarehouseScopes);
+        newUser.permissions.warehouseScopes = verifiedWarehouseScopes;
+      }
+      if (actions) {
+        newUser.permissions.actions = actions.filter((_) => UserActions.includes(_));
+      }
+      if (allowedUIModules) {
+        newUser.permissions.allowedUIModules = allowedUIModules.filter((_) => AllUIModules.includes(_));
+      }
       const user = await User.create(newUser);
       console.log({ msg: "new user created", user });
 
@@ -256,7 +284,13 @@ module.exports = {
       return;
     }
 
-    const { email, fullName, password } = req.body;
+    const {
+      email,
+      fullName,
+      password,
+      roles,
+      permissions: { inventoryScopes, warehouseScopes, actions, allowedUIModules },
+    } = req.body;
     try {
       const user = await User.findById(id);
       if (!user) {
@@ -268,6 +302,29 @@ module.exports = {
       if (email) user.email = email;
       if (fullName) user.fullName = fullName;
       if (password) user.password = await bcrypt.hash(password, salt);
+      if (roles) {
+        let verifiedRoleIds = await getValidIds(roles, UserRole);
+        verifiedRoleIds = verifiedRoleIds || [];
+        user.roles = verifiedRoleIds;
+      }
+      if (inventoryScopes) {
+        const verifiedInventoryScopes = await getScopes(inventoryScopes, InventoryScopes);
+        user.permissions.inventoryScopes = verifiedInventoryScopes;
+        user.markModified("permissions.inventoryScopes");
+      }
+      if (warehouseScopes) {
+        const verifiedWarehouseScopes = await getScopes(warehouseScopes, WarehouseScopes);
+        user.permissions.warehouseScopes = verifiedWarehouseScopes;
+        user.markModified("permissions.warehouseScopes");
+      }
+      if (actions) {
+        user.permissions.actions = actions.filter((_) => UserActions.includes(_));
+        user.markModified("permissions.actions");
+      }
+      if (allowedUIModules) {
+        user.permissions.allowedUIModules = allowedUIModules.filter((_) => AllUIModules.includes(_));
+        user.markModified("permissions.allowedUIModules");
+      }
 
       await user.save();
 
