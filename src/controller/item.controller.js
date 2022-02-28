@@ -11,7 +11,7 @@ const {
   ReportItemTransaction,
   AdjustItemTransaction,
 } = require("../models/ItemTransaction");
-
+const { S3 } = require("./../config/aws");
 const ItemAssociation = require("../models/ItemAssociation");
 const Sublevel = require("../models/Sublevel");
 const { InventoryTypes, ReportItemForTypes } = require("../config/constants");
@@ -72,6 +72,7 @@ module.exports = {
     };
 
     for (const key of Object.keys(item)) {
+      if (["customAttributes"].includes(key)) continue;
       if (item[key] === undefined) {
         res.status(400).send({ success: false, error: `Missing required param: "${key}"` });
         return;
@@ -86,6 +87,19 @@ module.exports = {
         res.status(404);
         return;
       }
+
+      const images = req.files;
+
+      for (let i = 0; i < images.length; i++) {
+        const url = await S3.uploadFile(
+          `item/${itemData._id.toString()}-${Date.now()}-${i}.${images[i].originalname.split(".").slice(-1).pop()}`,
+          images[i].path
+        );
+        itemData.images ||= [];
+        itemData.images.push({ url });
+      }
+      itemData.save();
+
       res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
@@ -497,5 +511,47 @@ module.exports = {
     } catch (error) {
       next(error);
     }
+  },
+
+  addImageToItem: async (req, res, next) => {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).send({ success: false, error: "invalid id" });
+    }
+
+    const item = await Item.findById(id);
+    if (!item) {
+      res.status(404).send({ success: false, error: "item not found" });
+    }
+
+    const image = req.file;
+    const url = await S3.uploadFile(`item/${item._id.toString()}-${Date.now()}-0.${image.originalname.split(".").slice(-1).pop()}`, image.path);
+    item.images ||= [];
+    item.images.push({ url });
+    await item.save();
+
+    res.send({ success: true, data: item });
+  },
+
+  removeImageFromItem: async (req, res, next) => {
+    const { id, image_id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).send({ success: false, error: "invalid id" });
+    }
+    if (!mongoose.isValidObjectId(image_id)) {
+      res.status(400).send({ success: false, error: "invalid image_id" });
+    }
+
+    const item = await Item.findById(id);
+    if (!item) {
+      res.status(404).send({ success: false, error: "item not found" });
+    }
+
+    item.images = item.images.filter((itemImage) => {
+      return (itemImage._id.toString() != image_id);
+    });
+
+    await item.save();
+    res.send({ success: true, data: item });
   },
 };

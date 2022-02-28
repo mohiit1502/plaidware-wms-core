@@ -1,10 +1,23 @@
 const router = require("express").Router();
 const controller = require("./item.controller");
 const { AuthenticateMiddleware, ItemTransactionCheck } = require("./utils/authorize");
+const multer = require("multer");
+const upload = multer({ dest: "tmp/uploads/" });
+
 /**
  * @route /item/
  */
-router.post("/", controller.createItem);
+router.post("/", upload.any("images"), controller.createItem);
+
+/**
+ * @route /item/:id/image
+ */
+router.post("/:id/image", upload.single("image"), controller.addImageToItem);
+
+/**
+ * @route /item/:id/image/:image_id
+ */
+router.delete("/:id/image/:image_id", controller.removeImageFromItem);
 
 /**
  * @route /item/
