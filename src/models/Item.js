@@ -13,6 +13,12 @@ const schema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    images: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     description: {
       type: String,
       required: true,

@@ -30,6 +30,7 @@ module.exports = {
         res.status(404).send({ success: false, error: "Inventory not found" });
         return;
       }
+      if (inventoryData.image_url) inventoryData.image_url = S3.generatePresignedUrl(inventoryData.image_url);
       res.send({ success: true, data: inventoryData });
     } catch (error) {
       next(error);
@@ -52,6 +53,7 @@ module.exports = {
 
       for (const inventory of inventoryData) {
         inventory["widgetFamilies"] = await WidgetFamily.find({ inventory: inventory._id });
+        if (inventory.image_url) inventory.image_url = S3.generatePresignedUrl(inventory.image_url);
       }
 
       res.send({ success: true, data: inventoryData });
