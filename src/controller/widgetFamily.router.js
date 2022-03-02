@@ -26,4 +26,9 @@ router.get("/:id", controller.getWidgetFamilyByID);
  */
 router.get("/:id/children", controller.getWidgetFamilyChildrenByID);
 
+/**
+ * @route /widgetFamily/
+ */
+router.delete("/:id", controller.deleteWidgetFamilyByID);
+
 module.exports = router;

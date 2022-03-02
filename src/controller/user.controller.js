@@ -1,12 +1,12 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
-
 const User = require("./../models/User");
 const { JWT_SECRET, JWT_REFRESH_EXPIRY_TIME, JWT_ACCESS_EXPIRY_TIME } = require("./../config/env");
 const UserRole = require("../models/UserRole");
-const UserPermission = require("../models/UserPermission");
-const { AllUIModules } = require("../config/constants");
+const { getScopes } = require("./utils/access-control");
+const { InventoryScopes, WarehouseScopes, UserActions, AllUIModules } = require("./../config/constants");
+const { S3 } = require("./../config/aws");
 
 const createAccessToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, {
@@ -89,48 +89,86 @@ module.exports = {
 
   addUserAccessControl: async (req, res, next) => {
     const { user } = req.params;
-    const { roles, permissions } = req.body;
+    const {
+      roles,
+      permissions: { inventoryScopes, warehouseScopes, actions, allowedUIModules },
+    } = req.body;
     if (!mongoose.isValidObjectId(user)) {
       throw new Error(`invalid format for user id field`);
     }
+    const userObject = await User.findById(user);
+    if (!userObject) {
+      res.status(404).send({ success: false, error: "User not found" });
+    }
 
-    let verifiedRoleIds = await getValidIds(roles, UserRole);
-    let verifiedPermissionIds = await getValidIds(permissions, UserPermission);
-    verifiedRoleIds = verifiedRoleIds || [];
-    verifiedPermissionIds = verifiedPermissionIds || [];
+    if (roles) {
+      let verifiedRoleIds = await getValidIds(roles, UserRole);
+      verifiedRoleIds = verifiedRoleIds || [];
+      userObject.roles = Array.from(new Set([...userObject.roles, ...verifiedRoleIds]));
+    }
 
-    const response = await User.findByIdAndUpdate(
-      user,
-      {
-        $push: {
-          roles: { $each: verifiedRoleIds },
-          permissions: { $each: verifiedPermissionIds },
-        },
-      },
-      { returnDocument: "after" }
-    );
-    res.send({ success: true, data: response });
+    if (inventoryScopes) {
+      const verifiedInventoryScopes = await getScopes(inventoryScopes, InventoryScopes);
+      userObject.permissions.inventoryScopes = Array.from(new Set([...userObject.permissions.inventoryScopes, ...verifiedInventoryScopes]));
+    }
+    if (warehouseScopes) {
+      const verifiedWarehouseScopes = await getScopes(warehouseScopes, WarehouseScopes);
+      userObject.permissions.warehouseScopes = Array.from(new Set([...userObject.permissions.warehouseScopes, ...verifiedWarehouseScopes]));
+    }
+    if (actions) {
+      userObject.permissions.actions = Array.from(new Set([...userObject.permissions.actions, ...actions.filter((_) => UserActions.includes(_))]));
+    }
+    if (allowedUIModules) {
+      userObject.permissions.allowedUIModules = Array.from(
+        new Set([...userObject.permissions.allowedUIModules, ...allowedUIModules.filter((_) => AllUIModules.includes(_))])
+      );
+    }
+    await userObject.save();
+    res.send({ success: true, data: userObject });
   },
 
   removeUserAccessControl: async (req, res, next) => {
     const { user } = req.params;
-    const { roles, permissions } = req.body;
+    const {
+      roles,
+      permissions: { inventoryScopes, warehouseScopes, actions, allowedUIModules },
+    } = req.body;
     if (!mongoose.isValidObjectId(user)) {
       throw new Error(`invalid format for user id field`);
     }
-    const verifiedRoleIds = await getValidIds(roles, UserRole);
-    const verifiedPermissionIds = await getValidIds(permissions, UserPermission);
-    const response = await User.findByIdAndUpdate(
-      user,
-      {
-        $pull: {
-          roles: { $in: verifiedRoleIds },
-          permissions: { $in: verifiedPermissionIds },
-        },
-      },
-      { returnDocument: "after" }
-    );
-    res.send({ success: true, data: response });
+    const userObject = await User.findById(user);
+    if (!userObject) {
+      res.status(404).send({ success: false, error: "User not found" });
+    }
+
+    if (roles) {
+      let verifiedRoleIds = await getValidIds(roles, UserRole);
+      verifiedRoleIds = verifiedRoleIds || [];
+      userObject.roles = userObject.roles.filter((_) => !verifiedRoleIds.includes(_));
+    }
+
+    if (inventoryScopes) {
+      const verifiedInventoryScopes = await getScopes(inventoryScopes, InventoryScopes);
+      userObject.permissions.inventoryScopes = userObject.permissions.inventoryScopes.filter((_) => !verifiedInventoryScopes.includes(_.id));
+    }
+    if (warehouseScopes) {
+      const verifiedWarehouseScopes = await getScopes(warehouseScopes, WarehouseScopes);
+      userObject.permissions.warehouseScopes = userObject.permissions.warehouseScopes.filter((warehouseScope) => {
+        for (const verifiedWarehouseScope of verifiedWarehouseScopes) {
+          if (verifiedWarehouseScope.id == warehouseScope.id && verifiedWarehouseScope.type == warehouseScope.type) {
+            return false;
+          }
+        }
+      });
+    }
+    if (actions) {
+      userObject.permissions.actions = userObject.permissions.actions.filter((_) => !actions.includes(_));
+    }
+    if (allowedUIModules) {
+      userObject.permissions.allowedUIModules = userObject.permissions.allowedUIModules.filter((_) => !allowedUIModules.includes(_));
+    }
+    await userObject.save();
+    res.send({ success: true, data: userObject });
   },
 
   getUIAccessControl: async (req, res, next) => {
@@ -167,9 +205,11 @@ module.exports = {
       const result = await User.find()
         .skip(page * perPage)
         .limit(perPage)
-        .populate({ path: "roles", populate: "permissions" })
-        .populate("permissions")
+        .populate("roles")
         .populate("createdBy");
+      for (const user of result) {
+        if (user.image_url) user.image_url = S3.generatePresignedUrl(user.image_url);
+      }
       res.send({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -183,17 +223,20 @@ module.exports = {
     }
 
     try {
-      const result = await User.findOne({ _id: id }, { id: 1, fullName: 1, email: 1, roles: 1, permissions: 1, createdBy: 1 })
-        .populate({ path: "roles", populate: "permissions" })
-        .populate("permissions")
+      const result = await User.findOne({ _id: id })
+        .populate("roles")
         .populate("createdBy");
+      if (result._doc.image_url) result.image_url = S3.generatePresignedUrl(result.image_url);
       res.send({ success: true, data: result });
     } catch (error) {
       next(error);
     }
   },
   createUser: async (req, res, next) => {
-    const { email, fullName, password } = req.body;
+    let { email, fullName, password, roles, permissions } = req.body;
+    permissions ||= {};
+    const { inventoryScopes, warehouseScopes, actions, allowedUIModules } = permissions;
+
     try {
       const salt = await bcrypt.genSalt();
       const newUser = {
@@ -203,10 +246,36 @@ module.exports = {
         createdBy: res.locals.user,
       };
 
+      if (roles) {
+        let verifiedRoleIds = await getValidIds(roles, UserRole);
+        verifiedRoleIds = verifiedRoleIds || [];
+        newUser.roles = verifiedRoleIds;
+      }
+
+      newUser.permissions = {};
+      if (inventoryScopes) {
+        const verifiedInventoryScopes = await getScopes(inventoryScopes, InventoryScopes);
+        newUser.permissions.inventoryScopes = verifiedInventoryScopes;
+      }
+      if (warehouseScopes) {
+        const verifiedWarehouseScopes = await getScopes(warehouseScopes, WarehouseScopes);
+        newUser.permissions.warehouseScopes = verifiedWarehouseScopes;
+      }
+      if (actions) {
+        newUser.permissions.actions = actions.filter((_) => UserActions.includes(_));
+      }
+      if (allowedUIModules) {
+        newUser.permissions.allowedUIModules = allowedUIModules.filter((_) => AllUIModules.includes(_));
+      }
       const user = await User.create(newUser);
       console.log({ msg: "new user created", user });
-
-      res.send({ success: true, data: user });
+      const image = req.file;
+      if (image) {
+        const url = await S3.uploadFile(`user/${user._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`, image.path);
+        user.image_url = url;
+        await user.save();
+      }
+      res.send({ success: true, data: { ...user, image_url: S3.generatePresignedUrl(user.image_url) } });
     } catch (err) {
       console.log(err);
       next(err);
@@ -219,7 +288,9 @@ module.exports = {
       return;
     }
 
-    const { email, fullName, password } = req.body;
+    let { email, fullName, password, roles, permissions } = req.body;
+    permissions ||= {};
+    const { inventoryScopes, warehouseScopes, actions, allowedUIModules } = permissions;
     try {
       const user = await User.findById(id);
       if (!user) {
@@ -231,10 +302,39 @@ module.exports = {
       if (email) user.email = email;
       if (fullName) user.fullName = fullName;
       if (password) user.password = await bcrypt.hash(password, salt);
+      if (roles) {
+        let verifiedRoleIds = await getValidIds(roles, UserRole);
+        verifiedRoleIds = verifiedRoleIds || [];
+        user.roles = verifiedRoleIds;
+      }
+      if (inventoryScopes) {
+        const verifiedInventoryScopes = await getScopes(inventoryScopes, InventoryScopes);
+        user.permissions.inventoryScopes = verifiedInventoryScopes;
+        user.markModified("permissions.inventoryScopes");
+      }
+      if (warehouseScopes) {
+        const verifiedWarehouseScopes = await getScopes(warehouseScopes, WarehouseScopes);
+        user.permissions.warehouseScopes = verifiedWarehouseScopes;
+        user.markModified("permissions.warehouseScopes");
+      }
+      if (actions) {
+        user.permissions.actions = actions.filter((_) => UserActions.includes(_));
+        user.markModified("permissions.actions");
+      }
+      if (allowedUIModules) {
+        user.permissions.allowedUIModules = allowedUIModules.filter((_) => AllUIModules.includes(_));
+        user.markModified("permissions.allowedUIModules");
+      }
+
+      const image = req.file;
+      if (image) {
+        const url = await S3.uploadFile(`user/${user._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`, image.path);
+        user.image_url = url;
+      }
 
       await user.save();
 
-      res.send({ success: true, data: user });
+      res.send({ success: true, data: { ...user, image_url: S3.generatePresignedUrl(user.image_url) } });
     } catch (err) {
       console.log(err);
       next(err);

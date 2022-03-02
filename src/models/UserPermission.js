@@ -46,6 +46,11 @@ const schema = new mongoose.Schema(
         enum: UserActions,
       },
     ],
+    status: {
+      type: Boolean,
+      default: true,
+      required: true,
+    },
   },
   {
     timestamps: true,

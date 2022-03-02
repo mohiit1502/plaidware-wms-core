@@ -1,6 +1,13 @@
 const mongoose = require("mongoose");
 const { CustomAttributeTypes } = require("./../config/constants");
 
+const ItemImage = new mongoose.Schema({
+  url: {
+    type: String,
+    trim: true,
+  },
+});
+
 const schema = new mongoose.Schema(
   {
     commonName: {
@@ -13,6 +20,7 @@ const schema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    images: [ItemImage],
     description: {
       type: String,
       required: true,
@@ -91,6 +99,9 @@ const schema = new mongoose.Schema(
         type: Number,
       },
       alertStockLevelCount: {
+        type: Number,
+      },
+      reorderStockLevelCount: {
         type: Number,
       },
     },

@@ -96,21 +96,21 @@ module.exports = {
     const { id } = req.params;
 
     if (!id) {
-      res.status(400).send("Missing id param");
+      res.status(400).send({ success: false, error: "Missing id param" });
       return;
     }
 
     const { name, parentId, inventoryId } = req.body;
 
     if (!(name || parentId || inventoryId)) {
-      res.status(400).send("Missing data in body");
+      res.status(400).send({ success: false, error: "Missing data in body" });
       return;
     }
 
     try {
       const widgetFamilyData = await WidgetFamily.findById(id);
       if (!widgetFamilyData) {
-        res.status(404);
+        res.status(404).send({ success: false, error: "Widget not found" });
         return;
       }
 
@@ -122,8 +122,10 @@ module.exports = {
       if (parentId && mongoose.isValidObjectId(parentId)) {
         parent = await WidgetFamily.findById(parentId);
         widgetFamilyData.parent = parent;
+      } else if (parentId && parentId == "NA") {
+        widgetFamilyData.parent = undefined;
       } else if (parentId && !mongoose.isValidObjectId(parentId)) {
-        res.status(400).send("Invalid params parentId");
+        res.status(400).send({ success: false, error: "Invalid params parentId" });
         return;
       }
 
@@ -132,12 +134,27 @@ module.exports = {
         inventory = await Inventory.findById(inventoryId);
         widgetFamilyData.inventory = inventory;
       } else if (inventoryId && !mongoose.isValidObjectId(inventoryId)) {
-        res.status(400).send("Invalid params inventoryId");
+        res.status(400).send({ success: false, error: "Invalid params inventoryId" });
         return;
       }
 
       await widgetFamilyData.save();
       res.send({ success: true, data: widgetFamilyData });
+    } catch (error) {
+      next(error);
+    }
+  },
+  deleteWidgetFamilyByID: async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id || !mongoose.isValidObjectId(id)) {
+      res.status(400).send({ success: false, error: "Missing/invalid id param" });
+      return;
+    }
+
+    try {
+      await WidgetFamily.deleteOne({ _id: id });
+      res.send({ success: true });
     } catch (error) {
       next(error);
     }

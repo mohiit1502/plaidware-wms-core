@@ -1,6 +1,7 @@
 const router = require("express").Router();
-const upload = require("../middleware/fileUpload");
 const controller = require("./warehouse.controller");
+const multer = require("multer");
+const upload = multer({ dest: "tmp/uploads/" });
 
 /**
  * @route /warehouse/
@@ -20,16 +21,11 @@ router.get("/:id/zones", controller.getWarehouseZonesByID);
 /**
  * @route /warehouse/
  */
-router.post("/", controller.createWarehouse);
-
-/**
- * @route /warehouse/add-image
- */
-router.post("/add-image/:id", upload.single("warehouse-image"), controller.addWarehouseImage);
+router.post("/", upload.single("image"), controller.createWarehouse);
 
 /**
  * @route /warehouse/
  */
-router.patch("/:id", controller.updateWarehouseByID);
+router.patch("/:id", upload.single("image"), controller.updateWarehouseByID);
 
 module.exports = router;

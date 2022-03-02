@@ -1,15 +1,7 @@
 const mongoose = require("mongoose");
 const UserRole = require("../models/UserRole");
-const UserPermission = require("../models/UserPermission");
-
-const getValidPermissions = async (permissions) => {
-  const verifiedPermissions = permissions.filter((permission) => mongoose.isValidObjectId(permission));
-  if (verifiedPermissions.length === 0) return [];
-  const permissionObjects = await UserPermission.find({
-    _id: { $in: verifiedPermissions },
-  }).select({ _id: 1 });
-  return permissionObjects.map((_) => _._id);
-};
+const { getScopes } = require("./utils/access-control");
+const { InventoryScopes, WarehouseScopes, UserActions, AllUIModules } = require("./../config/constants");
 
 module.exports = {
   getAllRoles: async (req, res, next) => {
@@ -43,11 +35,22 @@ module.exports = {
   },
   createRole: async (req, res, next) => {
     try {
-      const { name, permissions } = req.body;
-      const verifiedPermissions = await getValidPermissions(permissions);
+      const {
+        name,
+        permissions: { inventoryScopes, warehouseScopes, actions, allowedUIModules },
+        status,
+      } = req.body;
+      const verifiedInventoryScopes = await getScopes(inventoryScopes, InventoryScopes);
+      const verifiedWarehouseScopes = await getScopes(warehouseScopes, WarehouseScopes);
       const newUserRole = await UserRole.create({
         name,
-        permissions: verifiedPermissions,
+        status,
+        permissions: {
+          inventoryScopes: verifiedInventoryScopes,
+          warehouseScopes: verifiedWarehouseScopes,
+          actions: actions == undefined ? [] : actions.filter((_) => UserActions.includes(_)),
+          allowedUIModules: allowedUIModules == undefined ? [] : allowedUIModules.filter((_) => AllUIModules.includes(_)),
+        },
       });
       res.send({ success: true, data: newUserRole });
     } catch (e) {
@@ -55,8 +58,48 @@ module.exports = {
     }
   },
   updateRole: async (req, res, next) => {
-    // Need more clarity
-    res.send({ success: false, error: "not implemented" });
+    try {
+      const { id } = req.params;
+      if (!(id && mongoose.isValidObjectId(id))) {
+        res.status(400).send({ success: false, error: "invalid Id params" });
+      }
+      const role = await UserRole.findById(id);
+      if (!role) {
+        res.status(404).send({ success: false, error: "Role not found" });
+      }
+
+      const {
+        name,
+        permissions: { inventoryScopes, warehouseScopes, actions, allowedUIModules },
+      } = req.body;
+
+      if (name) {
+        role.name = name;
+        role.markModified("name");
+      }
+      if (inventoryScopes) {
+        const verifiedInventoryScopes = await getScopes(inventoryScopes, InventoryScopes);
+        role.permissions.inventoryScopes = verifiedInventoryScopes;
+        role.markModified("permissions.inventoryScopes");
+      }
+      if (warehouseScopes) {
+        const verifiedWarehouseScopes = await getScopes(warehouseScopes, WarehouseScopes);
+        role.permissions.warehouseScopes = verifiedWarehouseScopes;
+        role.markModified("permissions.warehouseScopes");
+      }
+      if (actions) {
+        role.permissions.actions = actions.filter((_) => UserActions.includes(_));
+        role.markModified("permissions.actions");
+      }
+      if (allowedUIModules) {
+        role.permissions.allowedUIModules = allowedUIModules.filter((_) => AllUIModules.includes(_));
+        role.markModified("permissions.allowedUIModules");
+      }
+      await role.save();
+      res.send({ success: true, data: role });
+    } catch (e) {
+      next(e);
+    }
   },
   deleteRole: async (req, res, next) => {
     try {

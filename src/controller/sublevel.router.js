@@ -1,6 +1,10 @@
 const router = require("express").Router();
 const controller = require("./sublevel.controller");
 
+/**
+ * @route /sublevel/filter
+ */
+router.post("/filter", controller.filterSublevels);
 
 /**
  * @route /sublevel/

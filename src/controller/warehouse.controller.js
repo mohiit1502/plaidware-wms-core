@@ -1,5 +1,7 @@
 const Warehouse = require("../models/Warehouse");
 const mongoose = require("mongoose");
+const { S3 } = require("./../config/aws");
+const Inventory = require("../models/Inventory");
 
 module.exports = {
   /**
@@ -19,6 +21,9 @@ module.exports = {
         res.status(404).send({ success: false, message: "not found" });
         return;
       }
+      if (warehouseData.image_url) {
+        warehouseData.image_url = S3.generatePresignedUrl(warehouseData.image_url);
+      }
       res.send({ success: true, data: warehouseData });
     } catch (error) {
       next(error);
@@ -29,19 +34,24 @@ module.exports = {
    * Create a warehouse
    */
   createWarehouse: async (req, res, next) => {
-    const { name, address, specs, company_id } = req.body;
+    const { name, address, specs, company_id, preferredInventories } = req.body;
 
     if (!(name && address)) {
       res.status(400).send("Missing params param");
       return;
     }
 
+    let preferredInventoryObjects;
+    if (preferredInventories) {
+      preferredInventoryObjects = await Inventory.find({ _id: { $in: preferredInventories } });
+    }
     try {
       const warehouseData = new Warehouse({
         name,
         address,
         specs,
         company_id: mongoose.Types.ObjectId(company_id),
+        preferredInventories: preferredInventoryObjects,
       });
 
       await warehouseData.save();
@@ -49,31 +59,19 @@ module.exports = {
         res.status(404).send({ success: false, message: "not found" });
         return;
       }
+
+      const image = req.file;
+      if (image) {
+        const url = await S3.uploadFile(`warehouse/${warehouseData._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`, image.path);
+        warehouseData.image_url = url;
+        await warehouseData.save();
+      }
+      if (warehouseData.image_url) {
+        warehouseData.image_url = S3.generatePresignedUrl(warehouseData.image_url);
+      }
       res.send({ success: true, message: warehouseData });
     } catch (error) {
       next(error);
-    }
-  },
-
-  /**
-   * Upload an image for the warehouse
-   */
-  addWarehouseImage: async (req, res, next) => {
-    console.dir("Warehouse image uploaded:", { file: req.file });
-
-    const { id } = req.params;
-
-    try {
-      const warehouseDetails = await Warehouse.findById(id);
-      if (!warehouseDetails) {
-        res.send({ success: false, message: "ID not found" });
-        return;
-      }
-      warehouseDetails.imageUrl = req.file.path;
-      await warehouseDetails.save();
-      res.send({ success: true, data: warehouseDetails });
-    } catch (err) {
-      next(err);
     }
   },
 
@@ -88,9 +86,9 @@ module.exports = {
       return;
     }
 
-    const { name, address, specs, company_id } = req.body;
-
-    if (!(name || address || specs || company_id)) {
+    const { name, address, specs, company_id, preferredInventories } = req.body;
+    const image = req.file;
+    if (!(name || address || specs || company_id || image)) {
       res.status(400).send({ success: false, message: "Missing data in body" });
       return;
     }
@@ -106,8 +104,18 @@ module.exports = {
       if (address) warehouseData.address = address;
       if (specs) warehouseData.specs = specs;
       if (company_id) warehouseData.company_id = mongoose.Types.ObjectId(company_id);
-
+      if (image) {
+        const url = await S3.uploadFile(`warehouseData/${warehouseData._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`, image.path);
+        warehouseData.image_url = url;
+      }
+      if (preferredInventories) {
+        const preferredInventoryObjects = await Inventory.find({ _id: { $in: preferredInventories } });
+        warehouseData.preferredInventories = preferredInventoryObjects;
+      }
       await warehouseData.save();
+      if (warehouseData.image_url) {
+        warehouseData.image_url = S3.generatePresignedUrl(warehouseData.image_url);
+      }
       res.send({ success: true, data: warehouseData });
     } catch (error) {
       next(error);
@@ -119,6 +127,9 @@ module.exports = {
       const { getAllWithPagination } = require("./utils/pagination");
       const { page, perPage } = req.query;
       const data = await getAllWithPagination(Warehouse, page, perPage);
+      for (const warehouse of data) {
+        if (warehouse.image_url) warehouse.image_url = S3.generatePresignedUrl(warehouse.image_url);
+      }
       res.send({ success: true, data: data });
     } catch (error) {
       next(error);

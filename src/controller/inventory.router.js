@@ -1,6 +1,5 @@
 const router = require("express").Router();
 const controller = require("./inventory.controller");
-
 /**
  * @route /inventory/
  */
@@ -15,6 +14,11 @@ router.patch("/:id", controller.updateInventoryByID);
  * @route /inventory/types
  */
 router.get("/types", controller.getInventoryTypes);
+
+/**
+ * @route /inventory/all
+ */
+router.get("/all", controller.getInventories);
 
 /**
  * @route /inventory/filter-by-type
