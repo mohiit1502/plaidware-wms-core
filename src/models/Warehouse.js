@@ -23,7 +23,10 @@ const schema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    images: [WarehouseImage],
+    image_url: {
+      type: String,
+      trim: true,
+    },
     company_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
@@ -32,6 +35,12 @@ const schema = new mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Zone",
+      },
+    ],
+    preferredInventories: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Inventory",
       },
     ],
   },

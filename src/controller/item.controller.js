@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const Item = require("../models/Item");
 const WidgetFamily = require("../models/WidgetFamily");
-const Inventory = require("../models/Inventory");
 const {
   PickItemTransaction,
   PutItemTransaction,
@@ -14,8 +13,8 @@ const {
 const { S3 } = require("./../config/aws");
 const ItemAssociation = require("../models/ItemAssociation");
 const Sublevel = require("../models/Sublevel");
-const { InventoryTypes, ReportItemForTypes } = require("../config/constants");
-
+const { ReportItemForTypes } = require("../config/constants");
+const { filterItems, filterItemAssociations } = require("./utils/aggregation");
 module.exports = {
   /**
    * Gets the Item data by `id`
@@ -24,16 +23,22 @@ module.exports = {
     const { id } = req.params;
 
     if (!id) {
-      res.status(400).send("Missing id param");
+      res.status(400).send({ success: false, error: "Missing id param" });
       return;
     }
 
     try {
       const itemData = await Item.findById(id).populate({ path: "widgetFamily", populate: "inventory" });
       if (!itemData) {
-        res.status(404);
+        res.status(404).send({ success: false, error: "Item not found" });
         return;
       }
+      if (itemData.images && itemData.images.length > 0) {
+        itemData.images = itemData.images.map((_) => {
+          return { _id: _._id, url: S3.generatePresignedUrl(_.url) };
+        });
+      }
+
       res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
@@ -95,11 +100,16 @@ module.exports = {
           `item/${itemData._id.toString()}-${Date.now()}-${i}.${images[i].originalname.split(".").slice(-1).pop()}`,
           images[i].path
         );
-        itemData.images ||= [];
+        itemData.images = itemData.images || [];
         itemData.images.push({ url });
       }
       itemData.save();
 
+      if (itemData.images) {
+        itemData.images = itemData.images.map((_) => {
+          return { _id: _._id, url: S3.generatePresignedUrl(_.url) };
+        });
+      }
       res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
@@ -150,8 +160,32 @@ module.exports = {
           itemData[key] = item[key];
         }
       }
+      // Removal of images
+      const existingImageIds = req.body.imageIds || [];
+      itemData.images = itemData.images.filter((image) => {
+        if (!image) return false;
+        return existingImageIds.includes(image._id.toString());
+      });
+      // Addition of images
+      const images = req.files;
+      if (images && Array.isArray(images)) {
+        for (let i = 0; i < images.length; i++) {
+          const url = await S3.uploadFile(
+            `item/${itemData._id.toString()}-${Date.now()}-${i}.${images[i].originalname.split(".").slice(-1).pop()}`,
+            images[i].path
+          );
+          itemData.images ||= [];
+          itemData.images.push({ url });
+        }
+      }
 
       await itemData.save();
+
+      if (itemData.images) {
+        itemData.images = itemData.images.map((_) => {
+          return { _id: _._id, url: S3.generatePresignedUrl(_.url) };
+        });
+      }
       res.send({ success: true, data: itemData });
     } catch (error) {
       next(error);
@@ -162,75 +196,39 @@ module.exports = {
    * Gets the Items data by filter
    */
   getItemsByFilter: async (req, res, next) => {
-    let { family, type, inventory, page, perPage } = req.query;
+    let { family, inventory, page, perPage } = req.query;
     page = page ? parseInt(page) : 0;
     perPage = perPage ? parseInt(perPage) : 10;
-    const inventoryFilters = {};
-    let inventories;
-    let widgetFamilies;
-    let itemFilters;
     try {
-      if (type && InventoryTypes.includes(type)) {
-        inventoryFilters["type"] = type;
-      }
+      const results = await filterItems(inventory, family, page, perPage);
 
-      if (inventory) {
-        inventoryFilters["_id"] = inventory;
+      for (const item of results[0].result) {
+        if (item.images) {
+          item.images = item.images.map((_) => {
+            return { _id: _._id, url: S3.generatePresignedUrl(_.url) };
+          });
+        }
       }
+      res.send({ success: true, data: results[0] });
+    } catch (error) {
+      next(error);
+    }
+  },
+  getItemAssociationsByFilter: async (req, res, next) => {
+    let { family, inventory, page, perPage } = req.query;
+    page = page ? parseInt(page) : 0;
+    perPage = perPage ? parseInt(perPage) : 10;
+    try {
+      const results = await filterItemAssociations(inventory, family, page, perPage);
 
-      if (Object.keys(inventoryFilters).length > 0) {
-        inventories = await Inventory.find(inventoryFilters);
+      for (const item of results[0].result) {
+        if (item.images) {
+          item.images = item.images.map((_) => {
+            return { _id: _._id, url: S3.generatePresignedUrl(_.url) };
+          });
+        }
       }
-
-      const widgetFamilyFilters = [];
-      if (inventories) {
-        widgetFamilyFilters.push({
-          inventory: { $in: inventories.map((_) => _._id) },
-        });
-      }
-
-      if (family) {
-        widgetFamilyFilters.push({
-          name: family,
-        });
-      }
-      if (widgetFamilyFilters.length > 0) {
-        widgetFamilies = await WidgetFamily.find({
-          $or: widgetFamilyFilters,
-        });
-      }
-
-      if (widgetFamilies) {
-        itemFilters = { widgetFamily: { $in: widgetFamilies.map((_) => _._id) } };
-      } else {
-        itemFilters = {};
-      }
-      const itemData = await Item.find(
-        itemFilters,
-        {
-          id: 1,
-          commonName: 1,
-          formalName: 1,
-          description: 1,
-          manufacturer: 1,
-          widgetFamily: 1,
-          size: 1,
-          color: 1,
-          type: 1,
-          unitOfMaterial: 1,
-          unitCost: 1,
-          packageCount: 1,
-          countPerPallet: 1,
-          countPerPalletPackage: 1,
-          customAttributes: 1,
-        },
-        { skip: page * perPage, limit: perPage }
-      ).populate({ path: "widgetFamily" });
-      if (!itemData) {
-        res.status(404);
-        return;
-      }
-      res.send({ success: true, data: itemData });
+      res.send({ success: true, data: results[0] });
     } catch (error) {
       next(error);
     }
@@ -526,10 +524,14 @@ module.exports = {
 
     const image = req.file;
     const url = await S3.uploadFile(`item/${item._id.toString()}-${Date.now()}-0.${image.originalname.split(".").slice(-1).pop()}`, image.path);
-    item.images ||= [];
+    item.images = item.images || [];
     item.images.push({ url });
     await item.save();
-
+    if (item.images) {
+      item.images = item.images.map((_) => {
+        return { _id: _._id, url: S3.generatePresignedUrl(_.url) };
+      });
+    }
     res.send({ success: true, data: item });
   },
 
@@ -548,10 +550,16 @@ module.exports = {
     }
 
     item.images = item.images.filter((itemImage) => {
-      return (itemImage._id.toString() != image_id);
+      return itemImage._id.toString() != image_id;
     });
 
     await item.save();
+
+    if (item.images) {
+      item.images = item.images.map((_) => {
+        return { _id: _._id, url: S3.generatePresignedUrl(_.url) };
+      });
+    }
     res.send({ success: true, data: item });
   },
 };

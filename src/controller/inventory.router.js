@@ -28,6 +28,11 @@ router.get("/all", controller.getInventories);
 router.get("/filter-by-type", controller.getInventoryByType);
 
 /**
+ * @route /inventory/all
+ */
+router.get("/all", controller.getInventories);
+
+/**
  * @route /inventory/:id
  */
 router.get("/:id", controller.getInventoryByID);

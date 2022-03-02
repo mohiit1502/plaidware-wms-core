@@ -1,13 +1,19 @@
 const mongoose = require("mongoose");
+const BaseSchema = require("./BaseSchema");
 const { isEmail } = require("validator");
 const bcrypt = require("bcrypt");
 const { UserActions, WarehouseScopes, InventoryScopes, AllUIModules } = require("./../config/constants");
 
 const schema = new mongoose.Schema(
   {
+    ...BaseSchema.obj,
     fullName: {
       type: String,
       trim: true,
+    },
+    phoneNumber: {
+      type: String,
+      trim: true
     },
     email: {
       type: String,
@@ -36,6 +42,10 @@ const schema = new mongoose.Schema(
     },
     passwordResetToken: {
       type: String,
+    },
+    image_url: {
+      type: String,
+      trim: true,
     },
     roles: [
       {
@@ -82,13 +92,11 @@ const schema = new mongoose.Schema(
         },
       ],
     },
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    isActive: {
+      type: Boolean,
+      default: true
     },
-  },
-  {
-    timestamps: true,
+    lastActive: Date
   }
 );
 

@@ -6,6 +6,7 @@ const { JWT_SECRET, JWT_REFRESH_EXPIRY_TIME, JWT_ACCESS_EXPIRY_TIME } = require(
 const UserRole = require("../models/UserRole");
 const { getScopes } = require("./utils/access-control");
 const { InventoryScopes, WarehouseScopes, UserActions, AllUIModules } = require("./../config/constants");
+const { S3 } = require("./../config/aws");
 
 const createAccessToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, {
@@ -206,7 +207,11 @@ module.exports = {
         .limit(perPage)
         .populate({ path: "roles", populate: "permissions" })
         .populate("permissions")
-        .populate("createdBy");
+        .populate("createdBy")
+        .populate("updatedBy");
+      for (const user of result) {
+        if (user.image_url) user.image_url = S3.generatePresignedUrl(user.image_url);
+      }
       res.send({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -220,32 +225,39 @@ module.exports = {
     }
 
     try {
-      const result = await User.findOne({ _id: id }, { id: 1, fullName: 1, email: 1, roles: 1, permissions: 1, createdBy: 1 })
-        .populate({ path: "roles", populate: "permissions" })
-        .populate("permissions")
+      const result = await User.findOne({ _id: id })
+        .populate("roles")
         .populate("createdBy");
+      if (result._doc.image_url) result.image_url = S3.generatePresignedUrl(result.image_url);
       res.send({ success: true, data: result });
     } catch (error) {
       next(error);
     }
   },
   createUser: async (req, res, next) => {
-    const {
-      email,
+    let {
       fullName,
+      email,
       password,
+      phoneNumber,
       roles,
-      permissions: { inventoryScopes, warehouseScopes, actions, allowedUIModules },
+      permissions,
     } = req.body;
+    permissions = permissions || {};
+    const { inventoryScopes, warehouseScopes, actions, allowedUIModules } = permissions;
 
     try {
       const salt = await bcrypt.genSalt();
+      const passwordEncrypted = password && await bcrypt.hash(password, salt);
       const newUser = {
-        email: email,
-        fullName: fullName,
-        password: await bcrypt.hash(password, salt),
+        fullName,
+        email,
+        phoneNumber,
+        isActive: true,
         createdBy: res.locals.user,
+        createdAt: new Date()
       };
+      passwordEncrypted && (newUser.password = passwordEncrypted);
 
       if (roles) {
         let verifiedRoleIds = await getValidIds(roles, UserRole);
@@ -270,8 +282,13 @@ module.exports = {
       }
       const user = await User.create(newUser);
       console.log({ msg: "new user created", user });
-
-      res.send({ success: true, data: user });
+      const image = req.file;
+      if (image) {
+        const url = await S3.uploadFile(`user/${user._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`, image.path);
+        user.image_url = url;
+        await user.save();
+      }
+      res.send({ success: true, data: { ...user, image_url: S3.generatePresignedUrl(user.image_url) } });
     } catch (err) {
       console.log(err);
       next(err);
@@ -284,14 +301,18 @@ module.exports = {
       return;
     }
 
-    const {
-      email,
-      fullName,
-      password,
-      roles,
-      permissions: { inventoryScopes, warehouseScopes, actions, allowedUIModules },
-    } = req.body;
     try {
+      let {
+        fullName,
+        email,
+        password,
+        phoneNumber,
+        roles,
+        isActive,
+        permissions
+      } = req.body;
+      permissions = permissions || {};
+      const { inventoryScopes, warehouseScopes, actions, allowedUIModules } = permissions;
       const user = await User.findById(id);
       if (!user) {
         res.status(404).send({ success: false, error: "User not found" });
@@ -299,9 +320,13 @@ module.exports = {
       }
       const salt = await bcrypt.genSalt();
 
-      if (email) user.email = email;
       if (fullName) user.fullName = fullName;
+      if (email) user.email = email;
       if (password) user.password = await bcrypt.hash(password, salt);
+      if (phoneNumber) user.phoneNumber = phoneNumber;
+      if (isActive !== undefined) user.isActive = isActive;
+      user.updatedBy = res.locals.user;
+      user.updatedAt = new Date();
       if (roles) {
         let verifiedRoleIds = await getValidIds(roles, UserRole);
         verifiedRoleIds = verifiedRoleIds || [];
@@ -326,9 +351,15 @@ module.exports = {
         user.markModified("permissions.allowedUIModules");
       }
 
+      const image = req.file;
+      if (image) {
+        const url = await S3.uploadFile(`user/${user._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`, image.path);
+        user.image_url = url;
+      }
+
       await user.save();
 
-      res.send({ success: true, data: user });
+      res.send({ success: true, data: { ...user, image_url: S3.generatePresignedUrl(user.image_url) } });
     } catch (err) {
       console.log(err);
       next(err);

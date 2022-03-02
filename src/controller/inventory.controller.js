@@ -30,7 +30,6 @@ module.exports = {
         res.status(404).send({ success: false, error: "Inventory not found" });
         return;
       }
-      if (inventoryData.image_url) inventoryData.image_url = S3.generatePresignedUrl(inventoryData.image_url);
       res.send({ success: true, data: inventoryData });
     } catch (error) {
       next(error);
@@ -53,7 +52,6 @@ module.exports = {
 
       for (const inventory of inventoryData) {
         inventory["widgetFamilies"] = await WidgetFamily.find({ inventory: inventory._id });
-        if (inventory.image_url) inventory.image_url = S3.generatePresignedUrl(inventory.image_url);
       }
 
       res.send({ success: true, data: inventoryData });
@@ -67,7 +65,6 @@ module.exports = {
    */
   createInventory: async (req, res, next) => {
     let { name, policies, widgetName, icon_slug } = req.body;
-    const image = req.file;
 
     if (!(name && widgetName && icon_slug)) {
       res.status(400).send("Missing params");
@@ -98,17 +95,11 @@ module.exports = {
         icon_slug,
       });
 
-      if (image) {
-        const url = await S3.uploadFile(`inventory/${inventoryData._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`, image.path);
-        inventoryData.image_url = url;
-      }
-
-      await inventoryData.save();
       if (!inventoryData) {
         res.status(404);
         return;
       }
-
+      await inventoryData.save();
       res.send({ success: true, data: { inventoryData } });
     } catch (error) {
       next(error);
@@ -160,12 +151,6 @@ module.exports = {
       };
 
       inventory.policies = verifiedPolicies;
-      const image = req.file;
-      if (image) {
-        const url = await S3.uploadFile(`inventory/${inventory._id.toString()}.${image.originalname.split(".").slice(-1).pop()}`, image.path);
-        inventory.image_url = url;
-      }
-
       await inventory.save();
       res.send({ success: true, data: { inventory } });
     } catch (error) {
@@ -205,4 +190,32 @@ module.exports = {
       next(error);
     }
   },
+
+  /**
+   * Fetch all available inventories
+   */
+  getInventories: async (req, res, next) => {
+    let { page, perPage } = req.query;
+    page = page ? parseInt(page) : 0;
+    perPage = perPage ? parseInt(perPage) : 10;
+    try {
+      const inventoryData = await Inventory.find(
+        { },
+        { id: 1, name: 1, type: 1 },
+        { skip: parseInt(page) * parseInt(perPage), limit: parseInt(perPage) }
+      );
+      if (!inventoryData) {
+        res.status(404);
+        return;
+      }
+
+      for (const inventory of inventoryData) {
+        inventory["widgetFamilies"] = await WidgetFamily.find({ inventory: inventory._id });
+      }
+
+      res.send({ success: true, data: inventoryData });
+    } catch (error) {
+      next(error);
+    }
+  }
 };

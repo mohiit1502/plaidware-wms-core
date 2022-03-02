@@ -22,12 +22,17 @@ router.delete("/:id/image/:image_id", controller.removeImageFromItem);
 /**
  * @route /item/
  */
-router.patch("/:id", controller.updateItemByID);
+router.patch("/:id", upload.any("images"), controller.updateItemByID);
 
 /**
  * @route /item/filter
  */
 router.get("/filter", controller.getItemsByFilter);
+
+/**
+ * @route /item/filter-association
+ */
+router.get("/filter-association", controller.getItemAssociationsByFilter);
 
 /**
  * @route /item/:id

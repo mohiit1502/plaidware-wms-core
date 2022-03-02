@@ -7,4 +7,6 @@ router.post("/create", controller.createPermission);
 router.post("/:id", controller.updatePermission);
 router.delete("/:id", controller.deletePermission);
 
+router.get("/actions/all", controller.getAllActions);
+
 module.exports = router;

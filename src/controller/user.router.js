@@ -1,6 +1,9 @@
 const router = require("express").Router();
 const controller = require("./user.controller");
 const { SuperAdminCheck, AuthenticateMiddleware } = require("./utils/authorize");
+const multer = require("multer");
+const upload = multer({ dest: "tmp/uploads/" });
+
 
 router.post("/register", controller.registerUser);
 router.post("/login", controller.loginUser);
@@ -11,7 +14,7 @@ router.get("/allowed-ui-modules", AuthenticateMiddleware, controller.getUIAccess
 
 router.get("/all", AuthenticateMiddleware, SuperAdminCheck, controller.getAllUsers);
 router.get("/:id", AuthenticateMiddleware, SuperAdminCheck, controller.getUserById);
-router.post("/create", AuthenticateMiddleware, SuperAdminCheck, controller.createUser);
-router.post("/:id", AuthenticateMiddleware, SuperAdminCheck, controller.updateUser);
+router.post("/create", upload.single("image"), AuthenticateMiddleware, SuperAdminCheck, controller.createUser);
+router.post("/:id", upload.single("image"), AuthenticateMiddleware, SuperAdminCheck, controller.updateUser);
 
 module.exports = router;

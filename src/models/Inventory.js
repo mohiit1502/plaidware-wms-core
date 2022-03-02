@@ -1,15 +1,10 @@
 const mongoose = require("mongoose");
-// const { InventoryTypes } = require("./../config/constants");
 
 const schema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: true,
-      trim: true,
-    },
-    image_url: {
-      type: String,
       trim: true,
     },
     icon_slug: {

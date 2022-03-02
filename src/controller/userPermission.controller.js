@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const UserPermission = require("./../models/UserPermission");
-const { InventoryScopes, WarehouseScopes } = require("./../config/constants");
+const { UserActions, InventoryScopes, WarehouseScopes } = require("./../config/constants");
 
 const getScopes = async (scopes, searchSet) => {
   const verifiedScopes = [];
@@ -93,4 +93,11 @@ module.exports = {
       next(e);
     }
   },
+  getAllActions: async (req, res, next) => {
+    try {
+      res.send({ success: true, data: UserActions });
+    } catch (e) {
+      next(e);
+    }
+  }
 };

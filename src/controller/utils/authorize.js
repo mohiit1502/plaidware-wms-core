@@ -8,7 +8,7 @@ const constants = require("../../config/constants");
 const authenticate = async (token) => {
   const decodedToken = jwt.verify(token, JWT_SECRET);
   if (decodedToken) {
-    return await User.findById(decodedToken.id).populate({ path: "roles", populate: "permissions" }).populate("permissions");
+    return await User.findById(decodedToken.id).populate("roles");
   }
 };
 
