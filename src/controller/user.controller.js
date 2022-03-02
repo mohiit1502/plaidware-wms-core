@@ -288,7 +288,7 @@ module.exports = {
         user.image_url = url;
         await user.save();
       }
-      res.send({ success: true, data: { ...user, image_url: S3.generatePresignedUrl(user.image_url) } });
+      res.send({ success: true, data: image ? { ...user?._doc, image_url: S3.generatePresignedUrl(user.image_url) } : { ...user?._doc } });
     } catch (err) {
       console.log(err);
       next(err);
@@ -359,7 +359,7 @@ module.exports = {
 
       await user.save();
 
-      res.send({ success: true, data: { ...user, image_url: S3.generatePresignedUrl(user.image_url) } });
+      res.send({ success: true, data: image ? { ...user._doc, image_url: S3.generatePresignedUrl(user.image_url) } : { ...user._doc } });
     } catch (err) {
       console.log(err);
       next(err);

@@ -174,7 +174,7 @@ module.exports = {
             `item/${itemData._id.toString()}-${Date.now()}-${i}.${images[i].originalname.split(".").slice(-1).pop()}`,
             images[i].path
           );
-          itemData.images ||= [];
+          itemData.images = itemData.images || [];
           itemData.images.push({ url });
         }
       }
