@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
-
 const Inventory = require("../models/Inventory");
 const WidgetFamily = require("../models/WidgetFamily");
 const { InventoryTypes } = require("../config/constants");
-const { S3 } = require("./../config/aws");
 
 module.exports = {
   /**
@@ -190,32 +188,4 @@ module.exports = {
       next(error);
     }
   },
-
-  /**
-   * Fetch all available inventories
-   */
-  getInventories: async (req, res, next) => {
-    let { page, perPage } = req.query;
-    page = page ? parseInt(page) : 0;
-    perPage = perPage ? parseInt(perPage) : 10;
-    try {
-      const inventoryData = await Inventory.find(
-        { },
-        { id: 1, name: 1, type: 1 },
-        { skip: parseInt(page) * parseInt(perPage), limit: parseInt(perPage) }
-      );
-      if (!inventoryData) {
-        res.status(404);
-        return;
-      }
-
-      for (const inventory of inventoryData) {
-        inventory["widgetFamilies"] = await WidgetFamily.find({ inventory: inventory._id });
-      }
-
-      res.send({ success: true, data: inventoryData });
-    } catch (error) {
-      next(error);
-    }
-  }
 };

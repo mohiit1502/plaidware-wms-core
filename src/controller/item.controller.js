@@ -179,6 +179,18 @@ module.exports = {
         }
       }
 
+      // Policies Metadata
+      if (!req.body.policiesMetadata) {
+        req.body.policiesMetadata = {};
+      }
+
+      itemData.policiesMetadata = {
+        underStockLevelCount: req.body.policiesMetadata.underStockLevelCount || itemData.policiesMetadata.underStockLevelCount,
+        overStockLevelCount: req.body.policiesMetadata.overStockLevelCount || itemData.policiesMetadata.overStockLevelCount,
+        alertStockLevelCount: req.body.policiesMetadata.alertStockLevelCount || itemData.policiesMetadata.alertStockLevelCount,
+        reorderStockLevelCount: req.body.policiesMetadata.reorderStockLevelCount || itemData.policiesMetadata.reorderStockLevelCount,
+      };
+
       await itemData.save();
 
       if (itemData.images) {
