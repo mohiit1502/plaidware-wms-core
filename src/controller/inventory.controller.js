@@ -188,4 +188,17 @@ module.exports = {
       next(error);
     }
   },
+
+  deleteInventoryByID: async (req, res, next) => {
+    const { id } = req.params;
+    if (!id || !mongoose.isValidObjectId(id)) {
+      res.status(400).send({ success: false, error: "Missing/Invalid inventory id" });
+    }
+    try {
+      await Inventory.deleteOne({ _id: id });
+      res.send({ success: true, error: "Inventory Successfully deleted" });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

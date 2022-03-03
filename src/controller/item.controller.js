@@ -574,4 +574,17 @@ module.exports = {
     }
     res.send({ success: true, data: item });
   },
+
+  deleteItemByID: async (req, res, next) => {
+    const { id } = req.params;
+    if (!id || !mongoose.isValidObjectId(id)) {
+      res.status(400).send({ success: false, error: "Missing/Invalid item ids" });
+    }
+    try {
+      await Item.deleteOne({ _id: id });
+      res.send({ success: true, error: "Item Successfully deleted" });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

@@ -37,4 +37,9 @@ router.get("/all", controller.getInventories);
  */
 router.get("/:id", controller.getInventoryByID);
 
+/**
+ * @route /inventory/:id
+ */
+router.delete("/:id", controller.deleteInventoryByID);
+
 module.exports = router;

@@ -199,4 +199,17 @@ module.exports = {
     await warehouse.save();
     res.send({ success: true, data: warehouse });
   },
+
+  deleteWarehouseByID: async (req, res, next) => {
+    const { id } = req.params;
+    if (!id || !mongoose.isValidObjectId(id)) {
+      res.status(400).send({ success: false, error: "Missing/Invalid warehouse id" });
+    }
+    try {
+      await Warehouse.deleteOne({ _id: id });
+      res.send({ success: true, error: "Warehouse Successfully deleted" });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
