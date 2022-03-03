@@ -243,7 +243,7 @@ module.exports = {
       roles,
       permissions,
     } = req.body;
-    permissions = permissions || {};
+    permissions = permissions ? JSON.parse(permissions) : {};
     const { inventoryScopes, warehouseScopes, actions, allowedUIModules } = permissions;
 
     try {
@@ -260,7 +260,7 @@ module.exports = {
       passwordEncrypted && (newUser.password = passwordEncrypted);
 
       if (roles) {
-        let verifiedRoleIds = await getValidIds(roles, UserRole);
+        let verifiedRoleIds = roles && await getValidIds(roles.split(','), UserRole);
         verifiedRoleIds = verifiedRoleIds || [];
         newUser.roles = verifiedRoleIds;
       }
@@ -311,7 +311,7 @@ module.exports = {
         isActive,
         permissions
       } = req.body;
-      permissions = permissions || {};
+      permissions = permissions ? JSON.parse(permissions) : {};
       const { inventoryScopes, warehouseScopes, actions, allowedUIModules } = permissions;
       const user = await User.findById(id);
       if (!user) {
@@ -328,7 +328,7 @@ module.exports = {
       user.updatedBy = res.locals.user;
       user.updatedAt = new Date();
       if (roles) {
-        let verifiedRoleIds = await getValidIds(roles, UserRole);
+        let verifiedRoleIds = roles && await getValidIds(roles.split(','), UserRole);
         verifiedRoleIds = verifiedRoleIds || [];
         user.roles = verifiedRoleIds;
       }
