@@ -212,7 +212,7 @@ module.exports = {
           totem_label: [
             `Z${getLabelTerm(resultItem.zone._id)}-A${getLabelTerm(resultItem.area._id)}-R${getLabelTerm(resultItem.row._id)}-B${getLabelTerm(
               resultItem.bay._id
-            )}}`,
+            )}`,
           ],
           location_data: [
             {

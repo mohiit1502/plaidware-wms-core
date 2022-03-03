@@ -20,9 +20,14 @@ router.post("/:id/image", upload.single("image"), controller.addImageToItem);
 router.delete("/:id/image/:image_id", controller.removeImageFromItem);
 
 /**
- * @route /item/
+ * @route /item/:id
  */
 router.patch("/:id", upload.any("images"), controller.updateItemByID);
+
+/**
+ * @route /item/:id
+ */
+router.delete("/:id", controller.deleteItemByID);
 
 /**
  * @route /item/filter
