@@ -28,4 +28,9 @@ router.post("/", upload.single("image"), controller.createWarehouse);
  */
 router.patch("/:id", upload.single("image"), controller.updateWarehouseByID);
 
+/**
+ * @route /inventory/:id
+ */
+router.delete("/:id", controller.deleteWarehouseByID);
+
 module.exports = router;

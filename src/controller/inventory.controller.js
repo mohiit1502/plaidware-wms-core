@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
-
 const Inventory = require("../models/Inventory");
 const WidgetFamily = require("../models/WidgetFamily");
 const { InventoryTypes } = require("../config/constants");
-const { S3 } = require("./../config/aws");
 
 module.exports = {
   /**
@@ -191,31 +189,16 @@ module.exports = {
     }
   },
 
-  /**
-   * Fetch all available inventories
-   */
-  getInventories: async (req, res, next) => {
-    let { page, perPage } = req.query;
-    page = page ? parseInt(page) : 0;
-    perPage = perPage ? parseInt(perPage) : 10;
+  deleteInventoryByID: async (req, res, next) => {
+    const { id } = req.params;
+    if (!id || !mongoose.isValidObjectId(id)) {
+      res.status(400).send({ success: false, error: "Missing/Invalid inventory id" });
+    }
     try {
-      const inventoryData = await Inventory.find(
-        { },
-        { id: 1, name: 1, type: 1 },
-        { skip: parseInt(page) * parseInt(perPage), limit: parseInt(perPage) }
-      );
-      if (!inventoryData) {
-        res.status(404);
-        return;
-      }
-
-      for (const inventory of inventoryData) {
-        inventory["widgetFamilies"] = await WidgetFamily.find({ inventory: inventory._id });
-      }
-
-      res.send({ success: true, data: inventoryData });
+      await Inventory.deleteOne({ _id: id });
+      res.send({ success: true, error: "Inventory Successfully deleted" });
     } catch (error) {
       next(error);
     }
-  }
+  },
 };

@@ -179,6 +179,18 @@ module.exports = {
         }
       }
 
+      // Policies Metadata
+      if (!req.body.policiesMetadata) {
+        req.body.policiesMetadata = {};
+      }
+
+      itemData.policiesMetadata = {
+        underStockLevelCount: req.body.policiesMetadata.underStockLevelCount || itemData.policiesMetadata.underStockLevelCount,
+        overStockLevelCount: req.body.policiesMetadata.overStockLevelCount || itemData.policiesMetadata.overStockLevelCount,
+        alertStockLevelCount: req.body.policiesMetadata.alertStockLevelCount || itemData.policiesMetadata.alertStockLevelCount,
+        reorderStockLevelCount: req.body.policiesMetadata.reorderStockLevelCount || itemData.policiesMetadata.reorderStockLevelCount,
+      };
+
       await itemData.save();
 
       if (itemData.images) {
@@ -561,5 +573,18 @@ module.exports = {
       });
     }
     res.send({ success: true, data: item });
+  },
+
+  deleteItemByID: async (req, res, next) => {
+    const { id } = req.params;
+    if (!id || !mongoose.isValidObjectId(id)) {
+      res.status(400).send({ success: false, error: "Missing/Invalid item ids" });
+    }
+    try {
+      await Item.deleteOne({ _id: id });
+      res.send({ success: true, error: "Item Successfully deleted" });
+    } catch (error) {
+      next(error);
+    }
   },
 };
