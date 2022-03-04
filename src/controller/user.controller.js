@@ -228,7 +228,7 @@ module.exports = {
       const result = await User.findOne({ _id: id })
         .populate("roles")
         .populate("createdBy");
-      if (result._doc.image_url) result.image_url = S3.generatePresignedUrl(result.image_url);
+      if (result._doc.image_url) result._doc.image_url = S3.generatePresignedUrl(result._doc.image_url);
       res.send({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -288,7 +288,7 @@ module.exports = {
         user.image_url = url;
         await user.save();
       }
-      res.send({ success: true, data: image ? { ...user?._doc, image_url: S3.generatePresignedUrl(user.image_url) } : { ...user?._doc } });
+      res.send({ success: true, data: image ? { ...user?._doc, image_url: S3.generatePresignedUrl(user._doc.image_url) } : { ...user?._doc } });
     } catch (err) {
       console.log(err);
       next(err);
@@ -359,7 +359,7 @@ module.exports = {
 
       await user.save();
 
-      res.send({ success: true, data: image ? { ...user._doc, image_url: S3.generatePresignedUrl(user.image_url) } : { ...user._doc } });
+      res.send({ success: true, data: image ? { ...user._doc, image_url: S3.generatePresignedUrl(user._doc.image_url) } : { ...user._doc } });
     } catch (err) {
       console.log(err);
       next(err);
