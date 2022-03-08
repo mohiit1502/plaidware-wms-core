@@ -33,12 +33,17 @@ module.exports = {
       }
     },
     generatePresignedUrl: (url) => {
-      const key = url.split(".com/")[1];
-      return S3.getSignedUrl("getObject", {
-        Bucket: AWS_S3_BUCKET,
-        Key: key,
-        Expires: 600,
-      });
+      try {
+        const key = url.split(".com/")[1];
+        return S3.getSignedUrl("getObject", {
+          Bucket: AWS_S3_BUCKET,
+          Key: key,
+          Expires: 600,
+        });
+      } catch (e) {
+        console.log("Something went wrong while trying to generate Presigned Image URL");
+        return "";
+      }
     }
   },
 };

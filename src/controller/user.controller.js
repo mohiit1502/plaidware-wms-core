@@ -210,7 +210,7 @@ module.exports = {
         .populate("createdBy")
         .populate("updatedBy");
       for (const user of result) {
-        if (user.image_url) user.image_url = S3.generatePresignedUrl(user.image_url);
+        if (user.image_url && user.image_url !== 'false') user.image_url = S3.generatePresignedUrl(user.image_url);
       }
       res.send({ success: true, data: result });
     } catch (error) {
